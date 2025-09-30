@@ -319,13 +319,6 @@ export default function Welcome({ auth }) {
                             <div className="text-yellow-600 font-bold text-base mb-3 tracking-wide">
                                 ABC E-LEARNING
                             </div>
-                            <div className="w-full h-32 bg-gradient-to-br from-blue-100 to-blue-50 rounded overflow-hidden">
-                                <img
-                                    src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                                    alt="University Campus"
-                                    className="w-full h-full object-cover opacity-60"
-                                />
-                            </div>
                         </div>
                     </div>
                 </div>

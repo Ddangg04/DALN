@@ -32,7 +32,20 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            // Regex để bắt buộc domain @st.phenikaa-uni.edu.vn
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                'unique:' . User::class,
+                function ($attribute, $value, $fail) {
+                    if (!str_ends_with($value, '@st.phenikaa-uni.edu.vn')) {
+                        $fail('Bạn chỉ có thể đăng ký bằng email sinh viên @st.phenikaa-uni.edu.vn.');
+                    }
+                },
+            ],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
