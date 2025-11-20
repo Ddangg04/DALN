@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title inertia>{{ config('app.name', 'Đại học ABC') }}</title>
+        <title inertia>{{ config('app.name', 'Đại học Phenikaa') }}</title>
 
         <!-- Favicon -->
         <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%231d4ed8'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white' font-weight='bold' font-family='Arial'>A</text></svg>">

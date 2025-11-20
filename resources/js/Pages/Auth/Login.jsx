@@ -59,7 +59,7 @@ export default function Welcome({ auth }) {
                             </div>
                         </div>
                         <span className="text-white text-2xl font-bold tracking-wide">
-                            ĐẠI HỌC ABC LMS
+                            ĐẠI HỌC PHENIKAA LMS
                         </span>
                     </div>
 
@@ -72,9 +72,9 @@ export default function Welcome({ auth }) {
                                 </p>
                             </div>
                             <h1 className="text-7xl font-black text-white mb-6 leading-tight tracking-tight">
-                                TRƯỜNG ĐẠI HỌC
+                                TRƯỜNG CÔNG NGHỆ THÔNG TIN
                                 <br />
-                                ABC VIỆT NAM
+                                ĐẠI HỌC PHENIKAA
                             </h1>
                         </div>
                     </div>
@@ -82,7 +82,7 @@ export default function Welcome({ auth }) {
                     {/* Footer Copyright */}
                     <div className="absolute bottom-6 left-6">
                         <p className="text-white text-sm">
-                            Copyright@2025 Trường Đại Học ABC Việt Nam
+                            Copyright@2025 Đại Học PHENIKAA
                         </p>
                     </div>
                 </div>
@@ -103,7 +103,7 @@ export default function Welcome({ auth }) {
                             </div>
                             <div>
                                 <div className="text-xs text-gray-600 uppercase tracking-wider font-medium">
-                                    TRƯỜNG ĐẠI HỌC ABC VIỆT NAM
+                                    TRƯỜNG CÔNG NGHỆ THÔNG TIN PHENIKAA
                                 </div>
                                 <div className="text-red-600 font-bold text-sm tracking-wide">
                                     HỆ THỐNG QUẢN LÍ HỌC TẬP TRỰC TUYẾN
