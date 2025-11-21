@@ -1,6 +1,6 @@
 // resources/js/Pages/Admin/Courses/Index.jsx
 import { Head, Link, router } from "@inertiajs/react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
 export default function CoursesIndex({
@@ -8,12 +8,7 @@ export default function CoursesIndex({
     departments = [],
     filters = {},
 }) {
-    // debug: show what server gửi
-    useEffect(() => {
-        // eslint-disable-next-line no-console
-        console.log("CoursesIndex props:", { courses, departments, filters });
-    }, [courses, departments, filters]);
-
+    // safe defaults nếu server không gửi filters
     const [search, setSearch] = useState(filters?.search ?? "");
     const [departmentId, setDepartmentId] = useState(
         filters?.department_id ?? ""
@@ -34,6 +29,7 @@ export default function CoursesIndex({
         }
     };
 
+    // helper: safely map courses.data
     const rows = Array.isArray(courses?.data) ? courses.data : [];
 
     return (
@@ -54,6 +50,7 @@ export default function CoursesIndex({
         >
             <Head title="Quản lý học phần" />
 
+            {/* Filters */}
             <div className="bg-white rounded-lg shadow mb-6">
                 <form onSubmit={handleSearch} className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -227,7 +224,7 @@ export default function CoursesIndex({
                     </table>
                 </div>
 
-                {/* Pagination (giữ nguyên nếu server trả) */}
+                {/* Pagination */}
                 {courses?.links && Array.isArray(courses.links) && (
                     <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
                         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
@@ -277,6 +274,7 @@ export default function CoursesIndex({
                             </div>
                         </div>
 
+                        {/* mobile simple prev/next */}
                         <div className="flex-1 flex justify-between sm:hidden">
                             {courses.prev_page_url && (
                                 <Link

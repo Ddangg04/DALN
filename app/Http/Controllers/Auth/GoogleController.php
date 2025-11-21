@@ -48,7 +48,7 @@ class GoogleController extends Controller
             // Đăng nhập
             Auth::login($user);
 
-            return redirect()->route('dashboard');
+            return redirect()->route('student.dashboard');
         } catch (\Exception $e) {
             return redirect()->route('login')->withErrors([
                 'email' => 'Đăng nhập Google thất bại. Vui lòng thử lại.',

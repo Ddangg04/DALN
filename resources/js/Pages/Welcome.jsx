@@ -82,7 +82,8 @@ export default function Welcome({ auth }) {
                     {/* Footer Copyright */}
                     <div className="absolute bottom-6 left-6">
                         <p className="text-white text-sm">
-                            Copyright@2025 TRƯỜNG CÔNG NGHỆ THÔNG TIN - ĐẠI HỌC PHENIKAA
+                            Copyright@2025 TRƯỜNG CÔNG NGHỆ THÔNG TIN - ĐẠI HỌC
+                            PHENIKAA
                         </p>
                     </div>
                 </div>

@@ -1,315 +1,296 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, usePage } from "@inertiajs/react";
 
 export default function AuthenticatedLayout({ header, children }) {
-    const { auth } = usePage().props;
-    const [showingNavigationDropdown, setShowingNavigationDropdown] =
-        useState(false);
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const page = usePage();
+    const pageProps = page?.props || {};
+    const auth = pageProps.auth || {};
+    const user = auth.user || null;
 
-    // Navigation items based on role
+    const [sidebarOpen, setSidebarOpen] = useState(false); // mobile default closed
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // desktop collapsed
+
+    // open sidebar on large screen by default after mount
+    useEffect(() => {
+        if (window.innerWidth >= 1024) {
+            setSidebarOpen(true);
+        }
+    }, []);
+
+    // safe route fallback
+    const safeRoute = (name, ...params) => {
+        try {
+            if (typeof route === "function") {
+                return route(name, ...params);
+            }
+        } catch (e) {
+            // ignore
+        }
+
+        const fallback = {
+            "admin.dashboard": "/admin/dashboard",
+            "admin.users.index": "/admin/users",
+            "admin.departments.index": "/admin/departments",
+            "admin.courses.index": "/admin/courses",
+            "admin.users.create": "/admin/users/create",
+            "admin.courses.create": "/admin/courses/create",
+            "admin.announcements.create": "/admin/announcements/create",
+            "admin.announcements.index": "/admin/announcements",
+            "admin.reports.index": "/admin/reports",
+            "teacher.dashboard": "/giang-vien/dashboard",
+            "student.dashboard": "/sinh-vien/dashboard",
+            logout: "/logout",
+        };
+        return fallback[name] || "/";
+    };
+
+    // check active route
+    const isActive = (routeName, href) => {
+        try {
+            if (
+                typeof route === "function" &&
+                typeof route().current === "function"
+            ) {
+                return route().current(routeName);
+            }
+        } catch (e) {}
+        try {
+            const path = window.location.pathname;
+            return (
+                href && path === new URL(href, window.location.origin).pathname
+            );
+        } catch (e) {
+            return false;
+        }
+    };
+
     const getNavigationItems = () => {
-        const role = auth.user.role;
+        // get role: prefer column role, then spatie roles first item
+        const role =
+            user?.role || (user ? user.roles?.[0]?.name ?? null : null);
 
-        if (role === "admin") {
-            return [
-                {
-                    name: "Dashboard",
-                    href: route("admin.dashboard"),
-                    icon: "dashboard",
-                },
-                {
-                    name: "Quản lý người dùng",
-                    href: route("admin.users.index"),
-                    icon: "users",
-                },
-                {
-                    name: "Quản lý khoa",
-                    href: route("admin.departments.index"),
-                    icon: "building",
-                },
-                {
-                    name: "Quản lý ngành học",
-                    href: route("admin.majors.index"),
-                    icon: "book",
-                },
-                {
-                    name: "Quản lý học phần",
-                    href: route("admin.courses.index"),
-                    icon: "library",
-                },
-                {
-                    name: "Năm học & Học kỳ",
-                    href: route("admin.semesters.index"),
-                    icon: "calendar",
-                },
-                {
-                    name: "Thông báo",
-                    href: route("admin.announcements.index"),
-                    icon: "megaphone",
-                },
-                {
-                    name: "Báo cáo",
-                    href: route("admin.reports.index"),
-                    icon: "chart",
-                },
-            ];
-        }
+        const adminItems = [
+            {
+                name: "Dashboard",
+                routeName: "admin.dashboard",
+                icon: "dashboard",
+            },
+            {
+                name: "Quản lý người dùng",
+                routeName: "admin.users.index",
+                icon: "users",
+            },
+            {
+                name: "Quản lý khoa",
+                routeName: "admin.departments.index",
+                icon: "building",
+            },
+            {
+                name: "Quản lý học phần",
+                routeName: "admin.courses.index",
+                icon: "library",
+            },
+            {
+                name: "Thông báo",
+                routeName: "admin.announcements.create",
+                icon: "megaphone",
+            },
+            {
+                name: "Báo cáo",
+                routeName: "admin.reports.index",
+                icon: "chart",
+            },
+        ];
 
-        if (role === "teacher") {
-            return [
-                {
-                    name: "Dashboard",
-                    href: route("teacher.dashboard"),
-                    icon: "dashboard",
-                },
-                {
-                    name: "Lớp học phần",
-                    href: route("teacher.classes.index"),
-                    icon: "users",
-                },
-                {
-                    name: "Điểm danh",
-                    href: route("teacher.attendance.index"),
-                    icon: "check",
-                },
-                {
-                    name: "Quản lý điểm",
-                    href: route("teacher.grades.index"),
-                    icon: "grade",
-                },
-                {
-                    name: "Lịch giảng dạy",
-                    href: route("teacher.schedule"),
-                    icon: "calendar",
-                },
-                {
-                    name: "Tài liệu",
-                    href: route("teacher.materials.index"),
-                    icon: "folder",
-                },
-            ];
-        }
+        const teacherItems = [
+            {
+                name: "Dashboard",
+                routeName: "teacher.dashboard",
+                icon: "dashboard",
+            },
+            {
+                name: "Lớp học phần",
+                routeName: "teacher.classes.index",
+                icon: "users",
+            },
+            {
+                name: "Điểm danh",
+                routeName: "teacher.attendance.index",
+                icon: "check",
+            },
+            {
+                name: "Quản lý điểm",
+                routeName: "teacher.grades.index",
+                icon: "grade",
+            },
+            {
+                name: "Lịch giảng dạy",
+                routeName: "teacher.schedule",
+                icon: "calendar",
+            },
+            {
+                name: "Tài liệu",
+                routeName: "teacher.materials.index",
+                icon: "folder",
+            },
+        ];
 
-        if (role === "student") {
-            return [
-                {
-                    name: "Dashboard",
-                    href: route("student.dashboard"),
-                    icon: "dashboard",
-                },
-                {
-                    name: "Đăng ký học phần",
-                    href: route("student.register"),
-                    icon: "plus",
-                },
-                {
-                    name: "Thời khóa biểu",
-                    href: route("student.schedule"),
-                    icon: "calendar",
-                },
-                {
-                    name: "Xem điểm",
-                    href: route("student.grades"),
-                    icon: "grade",
-                },
-                {
-                    name: "Học phí",
-                    href: route("student.tuition"),
-                    icon: "money",
-                },
-                {
-                    name: "Tài liệu học tập",
-                    href: route("student.materials"),
-                    icon: "book",
-                },
-                {
-                    name: "Thông tin cá nhân",
-                    href: route("student.profile"),
-                    icon: "user",
-                },
-            ];
-        }
+        const studentItems = [
+            {
+                name: "Dashboard",
+                routeName: "student.dashboard",
+                icon: "dashboard",
+            },
+            {
+                name: "Đăng ký học phần",
+                routeName: "student.register",
+                icon: "plus",
+            },
+            {
+                name: "Thời khóa biểu",
+                routeName: "student.schedule",
+                icon: "calendar",
+            },
+            { name: "Xem điểm", routeName: "student.grades", icon: "grade" },
+            { name: "Học phí", routeName: "student.tuition", icon: "money" },
+            {
+                name: "Tài liệu học tập",
+                routeName: "student.materials",
+                icon: "book",
+            },
+            {
+                name: "Thông tin cá nhân",
+                routeName: "student.profile",
+                icon: "user",
+            },
+        ];
+
+        if (!role) return []; // no role => no items
+
+        const roleNormalized = String(role).toLowerCase();
+
+        if (roleNormalized === "admin" || roleNormalized === "administrator")
+            return adminItems;
+        if (
+            roleNormalized === "giang-vien" ||
+            roleNormalized === "giangvien" ||
+            roleNormalized === "teacher" ||
+            roleNormalized === "chu-nhiem"
+        )
+            return teacherItems;
+        if (
+            roleNormalized === "sinh-vien" ||
+            roleNormalized === "sinhvien" ||
+            roleNormalized === "student"
+        )
+            return studentItems;
 
         return [];
     };
 
     const navigationItems = getNavigationItems();
 
+    // SVG icons
     const getIcon = (iconName) => {
+        const common = {
+            className: "w-5 h-5",
+            fill: "none",
+            stroke: "currentColor",
+            viewBox: "0 0 24 24",
+        };
         const icons = {
             dashboard: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
+                <svg {...common}>
                     <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2"
                     />
                 </svg>
             ),
             users: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
+                <svg {...common}>
                     <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                        d="M17 20h5v-1a4 4 0 00-4-4h-1M7 20h10M12 12a4 4 0 100-8 4 4 0 000 8z"
                     />
                 </svg>
             ),
             building: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
+                <svg {...common}>
                     <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                    />
-                </svg>
-            ),
-            book: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                    />
-                </svg>
-            ),
-            calendar: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                </svg>
-            ),
-            megaphone: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
-                    />
-                </svg>
-            ),
-            chart: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                        d="M3 21V7a2 2 0 012-2h6v16H3zM21 21V11a2 2 0 00-2-2h-6v12h8z"
                     />
                 </svg>
             ),
             library: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
+                <svg {...common}>
                     <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"
+                        d="M8 14v7M16 14v7M3 7h18M3 7l9-4 9 4"
+                    />
+                </svg>
+            ),
+            megaphone: (
+                <svg {...common}>
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592L5.436 13.683M18 13a3 3 0 100-6"
+                    />
+                </svg>
+            ),
+            chart: (
+                <svg {...common}>
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 17v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6M13 17V9a2 2 0 00-2-2h-2a2 2 0 00-2 2v8M21 17V5a2 2 0 00-2-2h-2"
                     />
                 </svg>
             ),
             check: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
+                <svg {...common}>
                     <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                        d="M9 12l2 2L22 5"
                     />
                 </svg>
             ),
             grade: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
+                <svg {...common}>
                     <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        d="M9 12h6m-6 4h6m-2-12l-7 7v6h14v-6l-7-7z"
                     />
                 </svg>
             ),
             folder: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
+                <svg {...common}>
                     <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                        d="M3 7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"
                     />
                 </svg>
             ),
             plus: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
+                <svg {...common}>
                     <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -319,27 +300,17 @@ export default function AuthenticatedLayout({ header, children }) {
                 </svg>
             ),
             money: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
+                <svg {...common}>
                     <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2"
                     />
                 </svg>
             ),
             user: (
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
+                <svg {...common}>
                     <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -349,21 +320,34 @@ export default function AuthenticatedLayout({ header, children }) {
                 </svg>
             ),
         };
-        return icons[iconName] || icons.dashboard;
+        return icons[iconName] ?? icons.dashboard;
     };
 
     return (
         <div className="min-h-screen bg-gray-100">
+            {/* Mobile overlay */}
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
             <aside
-                className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${
-                    sidebarOpen ? "translate-x-0" : "-translate-x-full"
-                } transition-transform duration-300 ease-in-out lg:translate-x-0`}
+                className={`fixed inset-y-0 left-0 z-50 bg-white shadow-lg transform transition-all duration-300 ease-in-out
+                    ${
+                        sidebarOpen
+                            ? "translate-x-0"
+                            : "-translate-x-full lg:translate-x-0"
+                    }
+                    ${sidebarCollapsed ? "w-16 lg:w-16" : "w-64 lg:w-64"}
+                `}
             >
                 {/* Logo */}
-                <div className="flex items-center justify-center h-16 bg-blue-700 border-b">
-                    <div className="flex items-center">
-                        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mr-2">
+                <div className="flex items-center justify-center h-16 bg-blue-700 border-b px-3">
+                    <div className="flex items-center w-full">
+                        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mr-3 flex-shrink-0">
                             <svg
                                 className="w-6 h-6 text-blue-700"
                                 fill="currentColor"
@@ -372,9 +356,11 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" />
                             </svg>
                         </div>
-                        <span className="text-white font-bold text-lg">
-                            Phenikaa LMS
-                        </span>
+                        {!sidebarCollapsed && (
+                            <span className="text-white font-bold text-lg">
+                                PHENIKAA LMS
+                            </span>
+                        )}
                     </div>
                 </div>
 
@@ -382,41 +368,70 @@ export default function AuthenticatedLayout({ header, children }) {
                 <div className="p-4 border-b bg-gray-50">
                     <div className="flex items-center">
                         <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                            {auth.user.name.charAt(0).toUpperCase()}
+                            {user?.name
+                                ? user.name.charAt(0).toUpperCase()
+                                : "U"}
                         </div>
-                        <div className="ml-3">
-                            <p className="text-sm font-medium text-gray-900">
-                                {auth.user.name}
-                            </p>
-                            <p className="text-xs text-gray-500 capitalize">
-                                {auth.user.role}
-                            </p>
-                        </div>
+                        {!sidebarCollapsed && (
+                            <div className="ml-3">
+                                <p className="text-sm font-medium text-gray-900">
+                                    {user?.name ?? "Người dùng"}
+                                </p>
+                                <p className="text-xs text-gray-500 capitalize">
+                                    {user?.role ?? ""}
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Navigation */}
                 <nav className="flex-1 overflow-y-auto py-4">
-                    {navigationItems.map((item) => (
-                        <Link
-                            key={item.name}
-                            href={item.href}
-                            className={`flex items-center px-4 py-3 text-sm font-medium transition-colors ${
-                                route().current(item.href)
-                                    ? "bg-blue-50 text-blue-700 border-r-4 border-blue-700"
-                                    : "text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-                            }`}
-                        >
-                            {getIcon(item.icon)}
-                            <span className="ml-3">{item.name}</span>
-                        </Link>
-                    ))}
+                    {navigationItems.length === 0 && (
+                        <div className="px-4 text-sm text-gray-500">
+                            (Không có menu — kiểm tra `auth.user` backend share)
+                        </div>
+                    )}
+
+                    {navigationItems.map((item) => {
+                        const href = safeRoute(item.routeName);
+                        const active = isActive(item.routeName, href);
+                        return (
+                            <Link
+                                key={item.name}
+                                href={href}
+                                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors ${
+                                    active
+                                        ? "bg-blue-50 text-blue-700 border-r-4 border-blue-700"
+                                        : "text-gray-700 hover:bg-gray-50 hover:text-blue-600"
+                                }`}
+                                title={sidebarCollapsed ? item.name : undefined}
+                            >
+                                <div
+                                    className={`flex items-center ${
+                                        sidebarCollapsed
+                                            ? "justify-center w-full"
+                                            : ""
+                                    }`}
+                                >
+                                    <div className="flex-shrink-0">
+                                        {getIcon(item.icon)}
+                                    </div>
+                                    {!sidebarCollapsed && (
+                                        <span className="ml-3">
+                                            {item.name}
+                                        </span>
+                                    )}
+                                </div>
+                            </Link>
+                        );
+                    })}
                 </nav>
 
                 {/* Logout */}
                 <div className="p-4 border-t">
                     <Link
-                        href={route("logout")}
+                        href={safeRoute("logout")}
                         method="post"
                         as="button"
                         className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -434,43 +449,83 @@ export default function AuthenticatedLayout({ header, children }) {
                                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                             />
                         </svg>
-                        <span className="ml-3">Đăng xuất</span>
+                        {!sidebarCollapsed && (
+                            <span className="ml-3">Đăng xuất</span>
+                        )}
                     </Link>
                 </div>
             </aside>
 
-            {/* Main Content */}
+            {/* Main content area (margin-left depends on sidebar) */}
             <div
                 className={`${
-                    sidebarOpen ? "lg:ml-64" : ""
+                    sidebarOpen
+                        ? sidebarCollapsed
+                            ? "lg:ml-16"
+                            : "lg:ml-64"
+                        : ""
                 } transition-all duration-300`}
             >
-                {/* Top Bar */}
+                {/* Top bar */}
                 <header className="bg-white shadow-sm sticky top-0 z-40">
                     <div className="flex items-center justify-between px-4 py-4">
-                        <button
-                            onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className="lg:hidden text-gray-500 hover:text-gray-700"
-                        >
-                            <svg
-                                className="w-6 h-6"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                        {/* Mobile hamburger */}
+                        <div className="flex items-center">
+                            <button
+                                onClick={() => setSidebarOpen((s) => !s)}
+                                className="lg:hidden text-gray-500 hover:text-gray-700 p-2 rounded-md"
+                                aria-label="Toggle menu"
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M4 6h16M4 12h16M4 18h16"
-                                />
-                            </svg>
-                        </button>
+                                <svg
+                                    className="w-6 h-6"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M4 6h16M4 12h16M4 18h16"
+                                    />
+                                </svg>
+                            </button>
 
-                        {header && <div className="flex-1">{header}</div>}
+                            {/* Desktop collapse/expand */}
+                            <button
+                                onClick={() => setSidebarCollapsed((s) => !s)}
+                                className="hidden lg:inline-flex items-center ml-2 p-2 rounded-md text-gray-600 hover:bg-gray-100"
+                                title={
+                                    sidebarCollapsed
+                                        ? "Mở rộng menu"
+                                        : "Thu gọn menu"
+                                }
+                            >
+                                <svg
+                                    className="w-6 h-6"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M4 6h16M4 12h16M4 18h16"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* header */}
+                        {header ? (
+                            <div className="flex-1 px-4">{header}</div>
+                        ) : (
+                            <div className="flex-1" />
+                        )}
 
                         <div className="flex items-center space-x-4">
-                            {/* Notifications */}
+                            {/* notification icon */}
                             <button className="relative text-gray-500 hover:text-gray-700">
                                 <svg
                                     className="w-6 h-6"
@@ -491,7 +546,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
                 </header>
 
-                {/* Page Content */}
+                {/* Page content */}
                 <main className="p-6">{children}</main>
             </div>
         </div>

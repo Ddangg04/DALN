@@ -1,67 +1,99 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Auth controllers
 use App\Http\Controllers\Auth\GoogleController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
 // Admin controllers
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\CoursesController as AdminCoursesController;
 use App\Http\Controllers\Admin\DepartmentController as AdminDepartmentController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\AnnouncementController as AdminAnnouncementController;
+use App\Http\Controllers\Admin\ReportController as AdminReportController;
 
-// Giảng viên controllers (nếu có)
+// Giảng viên / Sinh viên controllers (nếu có)
 use App\Http\Controllers\GiangVien\DashboardController as GVDashboardController;
-
-// Sinh viên controllers (nếu có)
-use App\Http\Controllers\SinhVien\DashboardController as SVDashboardController;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
 */
+use Illuminate\Support\Facades\Auth;
 
-// Home (Inertia welcome)
+/*
+|-----------------------------------------------------------------------
+| Public homepage (Welcome / Login)
+|-----------------------------------------------------------------------
+|
+| Nếu chưa đăng nhập => hiển thị Inertia 'Welcome' (trong project của
+| bạn file: resources/js/Pages/Welcome.jsx)
+| Nếu đã đăng nhập => redirect theo role (admin / giang-vien / sinh-vien)
+|
+*/
+
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    if (Auth::check()) {
+        $user = Auth::user();
+        $role = strtolower(trim($user->role ?? ''));
+
+        // mapping role -> route name (chỉnh nếu route name của bạn khác)
+        return match ($role) {
+            'admin' => redirect()->route('admin.dashboard'),
+            'administrator' => redirect()->route('admin.dashboard'),
+            'teacher', 'giang-vien', 'giangvien', 'chu-nhiem', 'pho-truong-khoa' => redirect()->route('giangvien.dashboard'),
+            'student', 'sinh-vien', 'sinhvien', 'lop-truong' => redirect()->route('student.dashboard'),
+            default => redirect()->route('login'),
+        };
+    }
+
+    // Nếu chưa đăng nhập -> hiện trang Welcome (đồng thời Welcome chứa form POST tới route('login'))
+    return Inertia::render('Welcome');
 })->name('home');
 
-// Default dashboard (authenticated & verified)
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+/*
+|-----------------------------------------------------------------------
+| Authentication routes (nếu bạn không dùng Breeze auto-generated)
+|-----------------------------------------------------------------------
+|
+| Thêm các route login/register/password nếu project chưa có.
+| Nếu bạn đã require __DIR__.'/auth.php' thì có thể không cần.
+|
+*/
 
-// Profile routes (middleware auth)
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
 
-// Auth routes (Breeze/Fortify style)
-require __DIR__.'/auth.php';
+// Login (show + submit)
+Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
+Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 
-// OAuth: Google
+// Register (show + submit) — nếu có đăng ký public
+Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
+Route::post('/register', [RegisteredUserController::class, 'store']);
+
+// Password reset (request form + send link)
+Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
+Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
+// reset token -> new password
+Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
+Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.update');
+
+// Logout (POST)
+Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
+// OAuth Google (nếu dùng)
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 
-/*
-|--------------------------------------------------------------------------
-| Admin routes (prefix: admin, middleware: auth + role:admin)
-|--------------------------------------------------------------------------
-| Assumes you have a 'role' middleware (e.g. spatie or custom) and role name 'admin'
-*/
+// Admin routes (prefix: admin, middleware: auth + role:admin)
+
 Route::middleware(['web', 'auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
@@ -74,13 +106,11 @@ Route::middleware(['web', 'auth', 'role:admin'])->prefix('admin')->name('admin.'
     Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
     Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
 
-    // Reset password -> generate temp password & send email
+    // reset password & assign roles
     Route::post('/users/{user}/reset-password', [AdminUserController::class, 'resetPassword'])->name('users.reset-password');
-
-    // Assign roles to user
     Route::post('/users/{user}/roles', [AdminUserController::class, 'assignRoles'])->name('users.assign-roles');
 
-    // Courses (Admin/Pages: resources/js/Pages/Admin/Courses)
+    // Courses
     Route::get('/courses', [AdminCoursesController::class, 'index'])->name('courses.index');
     Route::get('/courses/create', [AdminCoursesController::class, 'create'])->name('courses.create');
     Route::post('/courses', [AdminCoursesController::class, 'store'])->name('courses.store');
@@ -88,52 +118,58 @@ Route::middleware(['web', 'auth', 'role:admin'])->prefix('admin')->name('admin.'
     Route::put('/courses/{course}', [AdminCoursesController::class, 'update'])->name('courses.update');
     Route::delete('/courses/{course}', [AdminCoursesController::class, 'destroy'])->name('courses.destroy');
 
-    // Departments
+    // Departments (resource except show)
     Route::resource('departments', AdminDepartmentController::class)->except(['show'])->names('departments');
+
+    // Announcements (create & store)
+    Route::get('/announcements/create', [AdminAnnouncementController::class, 'create'])->name('announcements.create');
+    Route::post('/announcements', [AdminAnnouncementController::class, 'store'])->name('announcements.store');
+
+    // Reports
+      Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
+      Route::get('/reports/{report}/create', [AdminReportController::class, 'create'])->name('reports.create');
+        Route::get('/reports/{report}', [AdminReportController::class, 'show'])->name('reports.show');
+        Route::get('/reports/{report}/download', [AdminReportController::class, 'download'])->name('reports.download');
+        Route::get('/reports/{report}/export', [AdminReportController::class, 'export'])->name('reports.export');
+        Route::delete('/reports/{report}', [AdminReportController::class, 'destroy'])->name('reports.destroy');
 });
 
 /*
 |--------------------------------------------------------------------------
 | Giảng viên routes (prefix: giang-vien)
 |--------------------------------------------------------------------------
-| Thay 'giang-vien' bằng tên role middleware bạn đang dùng nếu khác
 */
-Route::middleware(['auth', 'role:giang-vien|chu-nhiem|pho-truong-khoa|truong-khoa'])->prefix('giang-vien')->name('giangvien.')->group(function () {
+Route::middleware(['auth', 'role:teacher'])->prefix('giang-vien')->name('giangvien.')->group(function () {
     Route::get('/dashboard', [GVDashboardController::class, 'index'])->name('dashboard');
 
-    // Thêm route cho: lớp, điểm, điểm danh, tài liệu, thông báo...
-    // Ví dụ (skeleton):
-    // Route::get('classes', [GVClassController::class, 'index'])->name('classes.index');
+    // Thêm route cho giảng viên ở đây...
 });
+use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
+use App\Http\Controllers\Student\ScheduleController;
+use App\Http\Controllers\Student\GradesController;
+use App\Http\Controllers\Student\RegistrationController;
+use App\Http\Controllers\Student\TuitionController;
+use App\Http\Controllers\Student\MaterialController;
+use App\Http\Controllers\Student\ProfileController ;
+use App\Http\Controllers\Student\RequestController;
 
-/*
-|--------------------------------------------------------------------------
-| Sinh viên routes (prefix: sinh-vien)
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth', 'role:sinh-vien|lop-truong'])->prefix('sinh-vien')->name('sinhvien.')->group(function () {
-    Route::get('/dashboard', [SVDashboardController::class, 'index'])->name('dashboard');
+Route::middleware(['auth', 'role:student|sinh-vien|sinhvien|lop-truong'])->prefix('sinhvien')->name('student.')->group(function () {
+    Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
 
-    // Thêm route cho: đăng ký học phần, bảng điểm, lịch học, tài liệu...
-    // Route::get('courses', [EnrollmentController::class, 'available'])->name('courses.available');
-});
+    Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule');
 
-/*
-|--------------------------------------------------------------------------
-| API / AJAX helper routes (optional)
-|--------------------------------------------------------------------------
-| Nếu cần route AJAX nội bộ (kiểm tra trùng lịch, lấy môn theo khoa...)
-*/
-Route::middleware('auth')->prefix('api')->name('api.')->group(function () {
-    // Route::get('courses/by-department/{dept}', [App\Http\Controllers\Api\CourseApiController::class, 'byDepartment'])->name('courses.by-department');
-});
+    Route::get('/grades', [GradesController::class, 'index'])->name('grades');
 
-/*
-|--------------------------------------------------------------------------
-| Fallback
-|--------------------------------------------------------------------------
-*/
-Route::fallback(function () {
-    // Nếu dùng SPA + Inertia, redirect về home hoặc render 404 page
-    return redirect()->route('home');
+    Route::get('/register', [RegistrationController::class, 'index'])->name('register');
+    Route::post('/register', [RegistrationController::class, 'store'])->name('register.store');
+
+    Route::get('/tuition', [TuitionController::class, 'index'])->name('tuition');
+
+    Route::get('/materials', [MaterialController::class, 'index'])->name('materials');
+
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
+    Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    Route::get('/requests', [RequestController::class, 'index'])->name('requests.index');
+    Route::post('/requests', [RequestController::class, 'store'])->name('requests.store');
 });

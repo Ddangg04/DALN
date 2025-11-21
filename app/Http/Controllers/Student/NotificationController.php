@@ -1,5 +1,5 @@
 <?php
-namespace App\Http\Controllers\SinhVien;
+namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use Inertia\Inertia;
@@ -14,6 +14,6 @@ class NotificationController extends Controller
             ->orWhere('target_id', Auth::id())
             ->latest()->paginate(20);
 
-        return Inertia::render('SinhVien/Notifications/Index', compact('notes'));
+        return Inertia::render('Student/Notifications/Index', compact('notes'));
     }
 }
