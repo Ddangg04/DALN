@@ -42,4 +42,18 @@ public function notifications()
 {
     return $this->hasMany(Notification::class);
 }
+public function teachingClasses()
+{
+    return $this->hasMany(ClassSession::class, 'teacher_id');
+}
+
+public function teachingSchedules()
+{
+    return $this->hasMany(TeachingSchedule::class, 'teacher_id');
+}
+
+public function assignments()
+{
+    return $this->hasMany(Assignment::class, 'teacher_id');
+}
 }

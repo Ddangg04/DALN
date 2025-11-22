@@ -100,5 +100,10 @@ public function isFullAttribute()
     if (!$this->max_students) return false;
     return $this->enrolled_students_count >= $this->max_students;
 }
+public function classSessions()
+    {
+        // assuming model is App\Models\ClassSession and FK is course_id
+        return $this->hasMany(\App\Models\ClassSession::class, 'course_id', 'id');
+    }
 }
 

@@ -127,12 +127,12 @@ class AuthenticatedSessionController extends Controller
             'admin' => 'admin.dashboard',
             'administrator' => 'admin.dashboard',
 
-            'teacher' => 'giangvien.dashboard',
-            'giang-vien' => 'giangvien.dashboard',
-            'giangvien' => 'giangvien.dashboard',
-            'chu-nhiem' => 'giangvien.dashboard',
-            'pho-truong-khoa' => 'giangvien.dashboard',
-            'truong-khoa' => 'giangvien.dashboard',
+            'teacher' => 'teacher.dashboard',
+            'giang-vien' => 'teacher.dashboard',
+            'giangvien' => 'teacher.dashboard',
+            'chu-nhiem' => 'teacher.dashboard',
+            'pho-truong-khoa' => 'teacher.dashboard',
+            'truong-khoa' => 'teacher.dashboard',
 
             'student' => 'student.dashboard',
             'sinh-vien' => 'student.dashboard',

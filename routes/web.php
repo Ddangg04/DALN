@@ -155,16 +155,40 @@ Route::delete('/reports/{report}', [AdminReportController::class, 'destroy'])->n
 
 });
 
-/*
-|--------------------------------------------------------------------------
-| Giảng viên routes (prefix: giang-vien)
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth', 'role:teacher'])->prefix('giang-vien')->name('giangvien.')->group(function () {
-    Route::get('/dashboard', [GVDashboardController::class, 'index'])->name('dashboard');
+use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
+use App\Http\Controllers\Teacher\ClassSessionController;
+use App\Http\Controllers\Teacher\AttendanceController as TeacherAttendanceController;
+use App\Http\Controllers\Teacher\GradeController;
+use App\Http\Controllers\Teacher\AssignmentController;
+use App\Http\Controllers\Teacher\ScheduleController as TeacherScheduleController;
 
-    // Thêm route cho giảng viên ở đây...
+// Teacher Routes
+Route::middleware(['auth', 'role:teacher'])->prefix('teacher')->name('teacher.')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [TeacherDashboardController::class, 'index'])->name('dashboard');
+    
+    // Class Sessions (Quản lý Lớp học phần)
+    Route::get('/classes', [ClassSessionController::class, 'index'])->name('classes.index');
+    Route::get('/classes/{classSession}', [ClassSessionController::class, 'show'])->name('classes.show');
+    Route::get('/classes/{classSession}/students', [ClassSessionController::class, 'students'])->name('classes.students');
+    
+    // Attendance (Điểm danh)
+    Route::get('/classes/{classSession}/attendance', [TeacherAttendanceController::class, 'index'])->name('attendance.index');
+    Route::post('/classes/{classSession}/attendance', [TeacherAttendanceController::class, 'store'])->name('attendance.store');
+
+    // Grades (Quản lý Điểm số)
+    Route::get('/classes/{classSession}/grades', [GradeController::class, 'index'])->name('grades.index');
+    Route::put('/grades/{enrollment}', [GradeController::class, 'update'])->name('grades.update');
+    Route::get('/classes/{classSession}/grades/export', [GradeController::class, 'export'])->name('grades.export');
+    
+    // Assignments (Bài tập)
+    Route::resource('assignments', AssignmentController::class);
+    Route::post('/submissions/{submission}/grade', [AssignmentController::class, 'gradeSubmission'])->name('submissions.grade');
+    
+    // Schedule (Lịch giảng dạy)
+    Route::get('/schedule', [TeacherScheduleController::class, 'index'])->name('schedule.index');
 });
+    // Thêm route cho giảng viên ở đây...
 use App\Http\Controllers\Student\DashboardController;
 use App\Http\Controllers\Student\ScheduleController;
 use App\Http\Controllers\Student\GradesController;
