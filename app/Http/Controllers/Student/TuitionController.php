@@ -1,36 +1,50 @@
 <?php
-
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use App\Models\TuitionFee;
+use App\Models\Payment;
+use Illuminate\Support\Facades\Auth;
 
 class TuitionController extends Controller
 {
     public function index()
     {
-        // Try load tuition info
-        $tuition = [
-            'total' => 1000000,
-            'paid' => 500000,
-            'outstanding' => 500000,
-        ];
+        $student = Auth::user();
 
-        try {
-            if (Schema::hasTable('tuitions') && Auth::check()) {
-                $tuitionRecord = DB::table('tuitions')->where('student_id', Auth::id())->first();
-                if ($tuitionRecord) {
-                    $tuition = (array)$tuitionRecord;
-                }
-            }
-        } catch (\Throwable $e) {
-            // ignore
+        $tuitionFees = TuitionFee::where('student_id', $student->id)
+                                ->with('payments')
+                                ->orderByDesc('year')
+                                ->orderByDesc('semester')
+                                ->get();
+
+        $totalOwed = $tuitionFees->where('status', '!=', 'paid')->sum('remaining_amount');
+        $totalPaid = $tuitionFees->sum('paid_amount');
+
+        return Inertia::render('Student/Tuition/Index', [
+            'tuitionFees' => $tuitionFees,
+            'stats' => [
+                'totalOwed' => $totalOwed,
+                'totalPaid' => $totalPaid,
+                'overdueFees' => $tuitionFees->where('status', 'overdue')->count(),
+            ],
+        ]);
+    }
+
+    public function show(TuitionFee $tuitionFee)
+    {
+        $student = Auth::user();
+
+        if ($tuitionFee->student_id !== $student->id) {
+            abort(403);
         }
 
-        return Inertia::render('Student/Tuition', compact('tuition'));
+        $tuitionFee->load('payments');
+
+        return Inertia::render('Student/Tuition/Show', [
+            'tuitionFee' => $tuitionFee,
+        ]);
     }
 }

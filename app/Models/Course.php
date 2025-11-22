@@ -73,5 +73,32 @@ class Course extends Model
     {
         return strtoupper($this->code);
     }
+    public function enrollments()
+{
+    return $this->hasMany(Enrollment::class);
+}
+
+public function schedules()
+{
+    return $this->hasMany(Schedule::class);
+}
+
+public function materials()
+{
+    return $this->hasMany(Material::class);
+}
+
+// Get enrolled students count
+public function getEnrolledStudentsCountAttribute()
+{
+    return $this->enrollments()->where('status', 'approved')->count();
+}
+
+// Check if course is full
+public function isFullAttribute()
+{
+    if (!$this->max_students) return false;
+    return $this->enrolled_students_count >= $this->max_students;
+}
 }
 

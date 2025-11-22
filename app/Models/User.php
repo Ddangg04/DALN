@@ -28,4 +28,18 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+    public function enrollments()
+{
+    return $this->hasMany(Enrollment::class, 'student_id');
+}
+
+public function tuitionFees()
+{
+    return $this->hasMany(TuitionFee::class, 'student_id');
+}
+
+public function notifications()
+{
+    return $this->hasMany(Notification::class);
+}
 }

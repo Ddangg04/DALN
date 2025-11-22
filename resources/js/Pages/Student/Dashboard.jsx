@@ -3,262 +3,251 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
 export default function StudentDashboard({
     stats,
-    schedule,
+    todaySchedule,
+    upcomingSchedule,
+    notifications,
     announcements,
-    upcomingExams,
-    recentGrades,
 }) {
     return (
         <AuthenticatedLayout
             header={
-                <div>
+                <div className="flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-gray-800">
-                        Dashboard - Sinh viên
+                        🎓 Dashboard - Sinh viên
                     </h2>
-                    <p className="text-sm text-gray-600 mt-1">
-                        Chào mừng bạn trở lại học tập!
-                    </p>
+                    <div className="text-sm text-gray-600">
+                        {new Date().toLocaleDateString("vi-VN", {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                        })}
+                    </div>
                 </div>
             }
         >
             <Head title="Student Dashboard" />
 
-            {/* Quick Stats */}
+            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-blue-100 text-sm mb-1">
-                                Học phần đang học
-                            </p>
-                            <p className="text-3xl font-bold">
-                                {stats?.current_courses || 0}
-                            </p>
-                        </div>
-                        <div className="bg-white/20 rounded-full p-3">
-                            <svg
-                                className="w-8 h-8"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                                />
-                            </svg>
-                        </div>
+                <Link
+                    href={route("student.grades.index")}
+                    className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-all"
+                >
+                    <div className="text-4xl mb-2">📊</div>
+                    <div className="text-3xl font-bold mb-1">
+                        {stats?.gpa || 0}
                     </div>
-                </div>
+                    <div className="text-blue-100">GPA</div>
+                </Link>
 
-                <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-green-100 text-sm mb-1">
-                                Điểm trung bình
-                            </p>
-                            <p className="text-3xl font-bold">
-                                {stats?.gpa ? stats.gpa.toFixed(2) : "0.00"}
-                            </p>
-                        </div>
-                        <div className="bg-white/20 rounded-full p-3">
-                            <svg
-                                className="w-8 h-8"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                                />
-                            </svg>
-                        </div>
+                <Link
+                    href={route("student.registration.index")}
+                    className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-all"
+                >
+                    <div className="text-4xl mb-2">📚</div>
+                    <div className="text-3xl font-bold mb-1">
+                        {stats?.totalCourses || 0}
                     </div>
-                </div>
+                    <div className="text-green-100">Học phần đang học</div>
+                </Link>
 
-                <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-purple-100 text-sm mb-1">
-                                Tín chỉ tích lũy
-                            </p>
-                            <p className="text-3xl font-bold">
-                                {stats?.total_credits || 0}
-                            </p>
-                        </div>
-                        <div className="bg-white/20 rounded-full p-3">
-                            <svg
-                                className="w-8 h-8"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
-                                />
-                            </svg>
-                        </div>
+                <Link
+                    href={route("student.tuition.index")}
+                    className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-all"
+                >
+                    <div className="text-4xl mb-2">💰</div>
+                    <div className="text-3xl font-bold mb-1">
+                        {(stats?.unpaidFees || 0).toLocaleString("vi-VN")}đ
                     </div>
-                </div>
+                    <div className="text-orange-100">
+                        Học phí chưa thanh toán
+                    </div>
+                </Link>
 
-                <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 text-white">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-orange-100 text-sm mb-1">
-                                Học phí còn nợ
-                            </p>
-                            <p className="text-3xl font-bold">
-                                {new Intl.NumberFormat("vi-VN").format(
-                                    stats?.outstanding_tuition || 0
-                                )}
-                                đ
-                            </p>
-                        </div>
-                        <div className="bg-white/20 rounded-full p-3">
-                            <svg
-                                className="w-8 h-8"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                            </svg>
-                        </div>
+                <Link
+                    href={route("student.notifications.index")}
+                    className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-all"
+                >
+                    <div className="text-4xl mb-2">🔔</div>
+                    <div className="text-3xl font-bold mb-1">
+                        {stats?.unreadNotifications || 0}
                     </div>
-                </div>
+                    <div className="text-purple-100">Thông báo chưa đọc</div>
+                </Link>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 {/* Today's Schedule */}
-                <div className="lg:col-span-2 bg-white rounded-lg shadow">
-                    <div className="p-6 border-b">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-gray-900">
-                                Lịch học hôm nay
-                            </h3>
-                            <Link
-                                href={route("student.schedule")}
-                                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                            >
-                                Xem tất cả →
-                            </Link>
-                        </div>
+                <div className="bg-white rounded-lg shadow">
+                    <div className="p-6 border-b flex justify-between items-center">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                            📅 Lịch học hôm nay
+                        </h3>
+                        <Link
+                            href={route("student.schedule.index")}
+                            className="text-sm text-blue-600 hover:text-blue-700"
+                        >
+                            Xem tuần →
+                        </Link>
                     </div>
                     <div className="p-6">
-                        {schedule && schedule.length > 0 ? (
-                            <div className="space-y-4">
-                                {schedule.map((item, index) => (
+                        {!todaySchedule || todaySchedule.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500">
+                                <div className="text-4xl mb-2">🎉</div>
+                                <p>Hôm nay không có lịch học!</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {todaySchedule.map((schedule) => (
                                     <div
-                                        key={index}
-                                        className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                                        key={schedule.id}
+                                        className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded"
                                     >
-                                        <div className="flex-shrink-0">
-                                            <div className="w-16 h-16 bg-blue-100 rounded-lg flex flex-col items-center justify-center">
-                                                <span className="text-xs text-blue-600 font-medium">
-                                                    {item.start_time}
-                                                </span>
-                                                <span className="text-xs text-blue-500">
-                                                    {item.end_time}
-                                                </span>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h4 className="font-semibold text-gray-900">
+                                                    {schedule.course.name}
+                                                </h4>
+                                                <p className="text-sm text-gray-600 mt-1">
+                                                    {schedule.course.code} •{" "}
+                                                    {schedule.room}
+                                                </p>
+                                                {schedule.instructor && (
+                                                    <p className="text-sm text-gray-500">
+                                                        GV:{" "}
+                                                        {
+                                                            schedule.instructor
+                                                                .name
+                                                        }
+                                                    </p>
+                                                )}
                                             </div>
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-gray-900 truncate">
-                                                {item.course_name}
-                                            </p>
-                                            <p className="text-sm text-gray-600">
-                                                {item.teacher_name}
-                                            </p>
-                                            <div className="flex items-center mt-1 text-xs text-gray-500">
-                                                <svg
-                                                    className="w-4 h-4 mr-1"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                                    />
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                                    />
-                                                </svg>
-                                                {item.room}
+                                            <div className="text-right">
+                                                <div className="text-sm font-semibold text-blue-600">
+                                                    {schedule.start_time} -{" "}
+                                                    {schedule.end_time}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="flex-shrink-0">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                {item.session_type}
-                                            </span>
                                         </div>
                                     </div>
                                 ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-12">
-                                <svg
-                                    className="w-16 h-16 text-gray-400 mx-auto mb-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                    />
-                                </svg>
-                                <p className="text-gray-500">
-                                    Không có lịch học hôm nay
-                                </p>
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* Announcements & Exams */}
-                <div className="space-y-6">
-                    {/* Announcements */}
-                    <div className="bg-white rounded-lg shadow">
-                        <div className="p-6 border-b">
-                            <h3 className="text-lg font-semibold text-gray-900">
-                                Thông báo mới
-                            </h3>
-                        </div>
-                        <div className="p-6">
-                            {announcements && announcements.length > 0 ? (
-                                <div className="space-y-4">
-                                    {announcements
-                                        .slice(0, 5)
-                                        .map((announcement) => (
-                                            <div
-                                                key={announcement.id}
-                                                className="border-l-4 border-blue-500 pl-4 py-2"
-                                            >
-                                                <p className="text-sm font-medium text-gray-900 line-clamp-2">
-                                                    {announcement.title}
+                {/* Recent Notifications */}
+                <div className="bg-white rounded-lg shadow">
+                    <div className="p-6 border-b flex justify-between items-center">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                            🔔 Thông báo gần đây
+                        </h3>
+                        <Link
+                            href={route("student.notifications.index")}
+                            className="text-sm text-blue-600 hover:text-blue-700"
+                        >
+                            Xem tất cả →
+                        </Link>
+                    </div>
+                    <div className="p-6">
+                        {!notifications || notifications.length === 0 ? (
+                            <p className="text-center text-gray-500 py-8">
+                                Chưa có thông báo
+                            </p>
+                        ) : (
+                            <div className="space-y-3">
+                                {notifications.map((notif) => (
+                                    <div
+                                        key={notif.id}
+                                        className={`p-3 rounded transition-colors ${
+                                            notif.is_read
+                                                ? "bg-gray-50"
+                                                : "bg-blue-50 border-l-4 border-blue-500"
+                                        }`}
+                                    >
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <h4 className="font-medium text-gray-900 text-sm">
+                                                    {notif.title}
+                                                </h4>
+                                                <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                                                    {notif.message}
                                                 </p>
-                                                <p className="text-xs text-gray-500 mt-1">
+                                                <p className="text-xs text-gray-400 mt-1">
+                                                    {new Date(
+                                                        notif.created_at
+                                                    ).toLocaleString("vi-VN")}
+                                                </p>
+                                            </div>
+                                            {!notif.is_read && (
+                                                <div className="w-2 h-2 bg-blue-600 rounded-full" />
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Announcements */}
+            <div className="bg-white rounded-lg shadow">
+                <div className="p-6 border-b">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                        📢 Thông báo chung
+                    </h3>
+                </div>
+                <div className="p-6">
+                    {!announcements || announcements.length === 0 ? (
+                        <p className="text-center text-gray-500 py-8">
+                            Chưa có thông báo
+                        </p>
+                    ) : (
+                        <div className="space-y-4">
+                            {announcements.map((announcement) => {
+                                const badge = {
+                                    high: {
+                                        class: "bg-red-100 text-red-800",
+                                        label: "Quan trọng",
+                                    },
+                                    medium: {
+                                        class: "bg-orange-100 text-orange-800",
+                                        label: "Trung bình",
+                                    },
+                                    low: {
+                                        class: "bg-green-100 text-green-800",
+                                        label: "Thường",
+                                    },
+                                }[announcement.priority];
+
+                                return (
+                                    <div
+                                        key={announcement.id}
+                                        className="border-l-4 border-blue-500 bg-gray-50 p-4 rounded"
+                                    >
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center space-x-2 mb-1">
+                                                    {announcement.is_pinned && (
+                                                        <span className="text-yellow-500">
+                                                            📌
+                                                        </span>
+                                                    )}
+                                                    <h4 className="font-semibold text-gray-900">
+                                                        {announcement.title}
+                                                    </h4>
+                                                    <span
+                                                        className={`px-2 py-0.5 text-xs font-semibold rounded-full ${badge.class}`}
+                                                    >
+                                                        {badge.label}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-gray-600 line-clamp-2">
+                                                    {announcement.content}
+                                                </p>
+                                                <p className="text-xs text-gray-400 mt-2">
                                                     {new Date(
                                                         announcement.created_at
                                                     ).toLocaleDateString(
@@ -266,292 +255,55 @@ export default function StudentDashboard({
                                                     )}
                                                 </p>
                                             </div>
-                                        ))}
-                                </div>
-                            ) : (
-                                <p className="text-sm text-gray-500 text-center py-4">
-                                    Không có thông báo mới
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Upcoming Exams */}
-                    <div className="bg-white rounded-lg shadow">
-                        <div className="p-6 border-b">
-                            <h3 className="text-lg font-semibold text-gray-900">
-                                Lịch thi sắp tới
-                            </h3>
-                        </div>
-                        <div className="p-6">
-                            {upcomingExams && upcomingExams.length > 0 ? (
-                                <div className="space-y-3">
-                                    {upcomingExams.map((exam, index) => (
-                                        <div
-                                            key={index}
-                                            className="flex items-center space-x-3 p-3 bg-red-50 rounded-lg"
-                                        >
-                                            <div className="flex-shrink-0">
-                                                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                                                    <svg
-                                                        className="w-6 h-6 text-red-600"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                                                        />
-                                                    </svg>
-                                                </div>
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-gray-900 truncate">
-                                                    {exam.course_name}
-                                                </p>
-                                                <p className="text-xs text-gray-600">
-                                                    {new Date(
-                                                        exam.exam_date
-                                                    ).toLocaleDateString(
-                                                        "vi-VN"
-                                                    )}{" "}
-                                                    - {exam.room}
-                                                </p>
-                                            </div>
                                         </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-sm text-gray-500 text-center py-4">
-                                    Không có lịch thi sắp tới
-                                </p>
-                            )}
+                                    </div>
+                                );
+                            })}
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Recent Grades */}
-            <div className="mt-6 bg-white rounded-lg shadow">
-                <div className="p-6 border-b">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                            Điểm mới nhất
-                        </h3>
-                        <Link
-                            href={route("student.grades")}
-                            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                        >
-                            Xem tất cả →
-                        </Link>
-                    </div>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Học phần
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Điểm CC
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Điểm GK
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Điểm CK
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Điểm TB
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Xếp loại
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {recentGrades && recentGrades.length > 0 ? (
-                                recentGrades.map((grade, index) => (
-                                    <tr
-                                        key={index}
-                                        className="hover:bg-gray-50"
-                                    >
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">
-                                                {grade.course_name}
-                                            </div>
-                                            <div className="text-sm text-gray-500">
-                                                {grade.course_code}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {grade.attendance_score || "-"}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {grade.midterm_score || "-"}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {grade.final_score || "-"}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span
-                                                className={`text-sm font-bold ${
-                                                    grade.average_score >= 8
-                                                        ? "text-green-600"
-                                                        : grade.average_score >=
-                                                          6.5
-                                                        ? "text-blue-600"
-                                                        : grade.average_score >=
-                                                          5
-                                                        ? "text-yellow-600"
-                                                        : "text-red-600"
-                                                }`}
-                                            >
-                                                {grade.average_score
-                                                    ? grade.average_score.toFixed(
-                                                          1
-                                                      )
-                                                    : "-"}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span
-                                                className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                    grade.grade === "A" ||
-                                                    grade.grade === "A+"
-                                                        ? "bg-green-100 text-green-800"
-                                                        : grade.grade === "B" ||
-                                                          grade.grade === "B+"
-                                                        ? "bg-blue-100 text-blue-800"
-                                                        : grade.grade === "C" ||
-                                                          grade.grade === "C+"
-                                                        ? "bg-yellow-100 text-yellow-800"
-                                                        : grade.grade === "D" ||
-                                                          grade.grade === "D+"
-                                                        ? "bg-orange-100 text-orange-800"
-                                                        : "bg-red-100 text-red-800"
-                                                }`}
-                                            >
-                                                {grade.grade || "-"}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td
-                                        colSpan="6"
-                                        className="px-6 py-12 text-center text-sm text-gray-500"
-                                    >
-                                        Chưa có điểm nào được cập nhật
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                    )}
                 </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
                 <Link
-                    href={route("student.register")}
-                    className="flex flex-col items-center p-6 bg-white rounded-lg shadow hover:shadow-lg transition-shadow"
+                    href={route("student.registration.index")}
+                    className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-all text-center"
                 >
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
-                        <svg
-                            className="w-6 h-6 text-blue-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 4v16m8-8H4"
-                            />
-                        </svg>
-                    </div>
-                    <span className="text-sm font-medium text-gray-900">
+                    <div className="text-4xl mb-2">📝</div>
+                    <div className="text-sm font-medium text-gray-700">
                         Đăng ký học phần
-                    </span>
+                    </div>
                 </Link>
 
                 <Link
-                    href={route("student.schedule")}
-                    className="flex flex-col items-center p-6 bg-white rounded-lg shadow hover:shadow-lg transition-shadow"
+                    href={route("student.grades.index")}
+                    className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-all text-center"
                 >
-                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-3">
-                        <svg
-                            className="w-6 h-6 text-green-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
-                        </svg>
-                    </div>
-                    <span className="text-sm font-medium text-gray-900">
-                        Thời khóa biểu
-                    </span>
-                </Link>
-
-                <Link
-                    href={route("student.grades")}
-                    className="flex flex-col items-center p-6 bg-white rounded-lg shadow hover:shadow-lg transition-shadow"
-                >
-                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-3">
-                        <svg
-                            className="w-6 h-6 text-purple-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                            />
-                        </svg>
-                    </div>
-                    <span className="text-sm font-medium text-gray-900">
+                    <div className="text-4xl mb-2">📊</div>
+                    <div className="text-sm font-medium text-gray-700">
                         Xem điểm
-                    </span>
+                    </div>
                 </Link>
 
                 <Link
-                    href={route("student.tuition")}
-                    className="flex flex-col items-center p-6 bg-white rounded-lg shadow hover:shadow-lg transition-shadow"
+                    href={route("student.schedule.index")}
+                    className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-all text-center"
                 >
-                    <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-3">
-                        <svg
-                            className="w-6 h-6 text-orange-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
+                    <div className="text-4xl mb-2">📅</div>
+                    <div className="text-sm font-medium text-gray-700">
+                        Lịch học
                     </div>
-                    <span className="text-sm font-medium text-gray-900">
-                        Học phí
-                    </span>
+                </Link>
+
+                <Link
+                    href={route("student.materials.index")}
+                    className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-all text-center"
+                >
+                    <div className="text-4xl mb-2">📚</div>
+                    <div className="text-sm font-medium text-gray-700">
+                        Tài liệu
+                    </div>
                 </Link>
             </div>
         </AuthenticatedLayout>

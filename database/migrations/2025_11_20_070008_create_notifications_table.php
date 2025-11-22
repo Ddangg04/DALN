@@ -6,19 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up(): void
+    public function up()
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->string('type'); // enrollment, grade, payment, announcement
             $table->string('title');
-            $table->text('content');
-            $table->foreignId('user_id')->nullable()->constrained('users'); // Người đăng
-            $table->string('target')->default('all'); // all / student / teacher / class_id
+            $table->text('message');
+            $table->boolean('is_read')->default(false);
+            $table->timestamp('read_at')->nullable();
+            $table->json('data')->nullable(); // Additional data
             $table->timestamps();
         });
     }
 
-    public function down(): void
+    public function down()
     {
         Schema::dropIfExists('notifications');
     }

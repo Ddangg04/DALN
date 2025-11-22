@@ -143,24 +143,32 @@ export default function AuthenticatedLayout({ header, children }) {
             },
             {
                 name: "Đăng ký học phần",
-                routeName: "student.register",
+                routeName: "student.registration.index",
                 icon: "plus",
             },
             {
                 name: "Thời khóa biểu",
-                routeName: "student.schedule",
+                routeName: "student.schedule.index",
                 icon: "calendar",
             },
-            { name: "Xem điểm", routeName: "student.grades", icon: "grade" },
-            { name: "Học phí", routeName: "student.tuition", icon: "money" },
+            {
+                name: "Xem điểm",
+                routeName: "student.grades.index",
+                icon: "grade",
+            },
+            {
+                name: "Học phí",
+                routeName: "student.tuition.index",
+                icon: "money",
+            },
             {
                 name: "Tài liệu học tập",
-                routeName: "student.materials",
+                routeName: "student.materials.index",
                 icon: "book",
             },
             {
                 name: "Thông tin cá nhân",
-                routeName: "student.profile",
+                routeName: "student.profile.index",
                 icon: "user",
             },
         ];

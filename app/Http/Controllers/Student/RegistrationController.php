@@ -1,61 +1,121 @@
 <?php
-
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
+use App\Models\Course;
+use App\Models\Enrollment;
+use App\Models\Department;
+use App\Models\Notification;
 
 class RegistrationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // list courses
-        $courses = [];
-        try {
-            if (Schema::hasTable('courses')) {
-                $courses = DB::table('courses')->get()->map(fn($c)=>(array)$c)->toArray();
-            } else {
-                $courses = [
-                    ['id'=>1,'name'=>'Lập trình Web','code'=>'IT101','credits'=>3],
-                    ['id'=>2,'name'=>'Cơ sở dữ liệu','code'=>'IT202','credits'=>3],
-                ];
-            }
-        } catch (\Throwable $e) {
-            $courses = [];
+         $student = Auth::user();
+        
+        // Available courses (not enrolled yet)
+        $query = Course::active()
+                      ->whereDoesntHave('enrollments', function($q) use ($student) {
+                          $q->where('student_id', $student->id);
+                      });
+
+        // Filters
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
         }
 
-        return Inertia::render('Student/Registration', compact('courses'));
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('search')) {
+            $query->search($request->search);
+        }
+
+        $availableCourses = $query->with(['department', 'schedules'])
+                                 ->paginate(12)
+                                 ->withQueryString();
+
+        $departments = Department::orderBy('name')->get();
+
+        // My enrollments
+        $myEnrollments = Enrollment::forStudent($student->id)
+                                  ->with(['course.department', 'course.schedules'])
+                                  ->orderByDesc('created_at')
+                                  ->get();
+
+        return Inertia::render('Student/Registration/Index', [
+            'availableCourses' => $availableCourses,
+            'myEnrollments' => $myEnrollments,
+            'departments' => $departments,
+            'filters' => $request->only(['department_id', 'type', 'search']),
+        ]);
     }
 
     public function store(Request $request)
     {
-        $v = Validator::make($request->all(), [
-            'course_id' => 'required|integer',
+         $student = Auth::user();
+        
+        $validated = $request->validate([
+            'course_id' => 'required|exists:courses,id',
         ]);
 
-        if ($v->fails()) {
-            return back()->withErrors($v)->withInput();
+        // Check if already enrolled
+        $existing = Enrollment::where('student_id', $student->id)
+                             ->where('course_id', $validated['course_id'])
+                             ->first();
+
+        if ($existing) {
+            return back()->with('error', 'Bạn đã đăng ký học phần này rồi!');
         }
 
-        // demo: lưu vào bảng registrations nếu có, nếu không, trả về success giả
-        try {
-            if (Schema::hasTable('registrations')) {
-                DB::table('registrations')->insert([
-                    'student_id' => Auth::user()->id,
-                    'course_id' => $request->course_id,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-        } catch (\Throwable $e) {
-            // ignore
+        // Check course capacity
+        $course = Course::find($validated['course_id']);
+        $currentEnrollments = Enrollment::where('course_id', $course->id)
+                                       ->where('status', 'approved')
+                                       ->count();
+
+        if ($course->max_students && $currentEnrollments >= $course->max_students) {
+            return back()->with('error', 'Học phần đã đầy!');
         }
 
-        return redirect()->route('student.register')->with('success', 'Đăng ký học phần thành công.');
+        // Create enrollment
+        Enrollment::create([
+            'student_id' => $student->id,
+            'course_id' => $validated['course_id'],
+            'status' => 'pending',
+        ]);
+
+        // Create notification
+        Notification::create([
+            'user_id' => $student->id,
+            'type' => 'enrollment',
+            'title' => 'Đăng ký học phần',
+            'message' => "Bạn đã đăng ký học phần {$course->name} thành công. Vui lòng chờ phê duyệt.",
+        ]);
+
+        return back()->with('success', 'Đăng ký học phần thành công!');
+    }
+
+    public function destroy(Enrollment $enrollment)
+    {
+        $student = Auth::user();
+
+        // Check ownership
+        if ($enrollment->student_id !== $student->id) {
+            abort(403);
+        }
+
+        // Can only drop pending or approved enrollments
+        if (!in_array($enrollment->status, ['pending', 'approved'])) {
+            return back()->with('error', 'Không thể hủy đăng ký học phần này!');
+        }
+
+        $enrollment->update(['status' => 'dropped']);
+
+        return back()->with('success', 'Đã hủy đăng ký học phần!');
     }
 }

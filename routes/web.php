@@ -165,32 +165,47 @@ Route::middleware(['auth', 'role:teacher'])->prefix('giang-vien')->name('giangvi
 
     // Thêm route cho giảng viên ở đây...
 });
-use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
+use App\Http\Controllers\Student\DashboardController;
 use App\Http\Controllers\Student\ScheduleController;
 use App\Http\Controllers\Student\GradesController;
 use App\Http\Controllers\Student\RegistrationController;
 use App\Http\Controllers\Student\TuitionController;
 use App\Http\Controllers\Student\MaterialController;
 use App\Http\Controllers\Student\ProfileController ;
+use App\Http\Controllers\Student\NotificationController;
 use App\Http\Controllers\Student\RequestController;
 
-Route::middleware(['auth', 'role:student|sinh-vien|sinhvien|lop-truong'])->prefix('sinhvien')->name('student.')->group(function () {
-    Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
-
-    Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule');
-
-    Route::get('/grades', [GradesController::class, 'index'])->name('grades');
-
-    Route::get('/register', [RegistrationController::class, 'index'])->name('register');
-    Route::post('/register', [RegistrationController::class, 'store'])->name('register.store');
-
-    Route::get('/tuition', [TuitionController::class, 'index'])->name('tuition');
-
-    Route::get('/materials', [MaterialController::class, 'index'])->name('materials');
-
-    Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
-    Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
-
-    Route::get('/requests', [RequestController::class, 'index'])->name('requests.index');
-    Route::post('/requests', [RequestController::class, 'store'])->name('requests.store');
+Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Profile
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    
+    // Registration (Đăng ký học phần)
+    Route::get('/registration', [RegistrationController::class, 'index'])->name('registration.index');
+    Route::post('/registration', [RegistrationController::class, 'store'])->name('registration.store');
+    Route::delete('/registration/{enrollment}', [RegistrationController::class, 'destroy'])->name('registration.destroy');
+    
+    // Grades (Xem điểm)
+    Route::get('/grades', [GradesController::class, 'index'])->name('grades.index');
+    Route::get('/grades/{enrollment}', [GradesController::class, 'show'])->name('grades.show');
+    
+    // Schedule (Lịch học)
+    Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
+    
+    // Tuition (Học phí)
+    Route::get('/tuition', [TuitionController::class, 'index'])->name('tuition.index');
+    Route::get('/tuition/{tuitionFee}', [TuitionController::class, 'show'])->name('tuition.show');
+    
+    // Materials (Tài liệu)
+    Route::get('/materials', [MaterialController::class, 'index'])->name('materials.index');
+    Route::get('/materials/{material}/download', [MaterialController::class, 'download'])->name('materials.download');
+    
+    // Notifications (Thông báo)
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
 });

@@ -1,37 +1,36 @@
 <?php
-
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
-
+use App\Models\Schedule;
+use App\Models\Enrollment;
+use Illuminate\Support\Facades\Auth;
 class ScheduleController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        // Fetch real schedule from DB if exists, else sample
-        $schedule = [];
-        
-        try {
-            $userId = Auth::check() ? Auth::id() : null;
-            if ($userId) {
-                $schedule = DB::table('schedules')->where('student_id', $userId)->get()->map(fn($r)=>(array)$r)->toArray();
-            }
-            
-            if (empty($schedule)) {
-                $schedule = [
-                    ['course_name'=>'Lập trình Web','day'=>'Thứ 2','start_time'=>'08:00','end_time'=>'09:45','room'=>'P101','teacher_name'=>'TS. A'],
-                    ['course_name'=>'CSDL','day'=>'Thứ 3','start_time'=>'10:00','end_time'=>'11:45','room'=>'P202','teacher_name'=>'ThS. B'],
-                ];
-            }
-        } catch (\Throwable $e) {
-            $schedule = [];
-        }
+        $student = Auth::user();
 
-        return Inertia::render('Student/Schedule', compact('schedule'));
+        // Get all schedules for enrolled courses
+        $schedules = Schedule::whereHas('course.enrollments', function($q) use ($student) {
+                            $q->where('student_id', $student->id)
+                              ->where('status', 'approved');
+                        })
+                        ->with(['course.department', 'instructor'])
+                        ->get()
+                        ->groupBy('day_of_week');
+
+        // Week days order
+        $daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        
+        $organizedSchedule = collect($daysOrder)->mapWithKeys(function($day) use ($schedules) {
+            return [$day => $schedules->get($day, collect())->sortBy('start_time')->values()];
+        });
+
+        return Inertia::render('Student/Schedule/Index', [
+            'schedules' => $organizedSchedule,
+        ]);
     }
 }

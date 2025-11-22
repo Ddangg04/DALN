@@ -5,59 +5,85 @@ namespace App\Http\Controllers\Student;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Enrollment;
+use App\Models\TuitionFee;
+use App\Models\Schedule;
+use App\Models\Notification;
+use App\Models\Announcement;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        // Tải dữ liệu an toàn (try/catch tránh lỗi khi bảng chưa có)
-        try {
-            $stats = [
-                'current_courses' => 3,
-                'gpa' => 3.45,
-                'total_credits' => 60,
-                'outstanding_tuition' => 0,
-            ];
+        $student = Auth::user();
 
-            // Lấy 5 thông báo mới nếu bảng tồn tại
-            if (Schema::hasTable('announcements')) {
-                $announcements = DB::table('announcements')
-                    ->select('id','title','created_at')
-                    ->orderBy('created_at','desc')
-                    ->limit(5)
-                    ->get()
-                    ->map(fn($a) => (array)$a)
-                    ->toArray();
-            }
+        // Enrollments stats
+        $totalCourses = Enrollment::forStudent($student->id)->approved()->count();
+        $pendingEnrollments = Enrollment::forStudent($student->id)->pending()->count();
+        $pendingEnrollments = Enrollment::forStudent($student->id)->pending()->count();
+        
+        // GPA calculation
+        $enrollments = Enrollment::forStudent($student->id)
+                                ->approved()
+                                ->whereNotNull('total_score')
+                                ->get();
+        
+        $gpa = $enrollments->avg('total_score') ?? 0;
+        $totalCredits = $enrollments->sum('course.credits');
 
-            // Lịch học sample (thay bằng query thực tế nếu có)
-            $schedule = [
-                ['course_name' => 'Lập trình web', 'teacher_name' => 'TS. A', 'start_time' => '08:00', 'end_time' => '09:45', 'room' => 'P101', 'session_type' => 'LT'],
-                ['course_name' => 'Cơ sở dữ liệu', 'teacher_name' => 'ThS. B', 'start_time' => '10:00', 'end_time' => '11:45', 'room' => 'P202', 'session_type' => 'TH'],
-            ];
+        // Tuition stats
+        $unpaidFees = TuitionFee::where('student_id', $student->id)
+                                ->where('status', '!=', 'paid')
+                                ->sum('remaining_amount');
 
-            $upcomingExams = [
-                ['course_name' => 'Cơ sở dữ liệu', 'exam_date' => now()->addDays(7)->toDateString(), 'room' => 'Hội trường A'],
-            ];
+        // Today's schedule
+        $today = now()->format('l'); // Monday, Tuesday, etc.
+        $todaySchedule = Schedule::whereHas('course.enrollments', function($q) use ($student) {
+                                    $q->where('student_id', $student->id)
+                                      ->where('status', 'approved');
+                                })
+                                ->where('day_of_week', $today)
+                                ->with(['course', 'instructor'])
+                                ->orderBy('start_time')
+                                ->get();
 
-            $recentGrades = []; // nếu có table grades, load ở đây
+        // Recent notifications
+        $notifications = Notification::where('user_id', $student->id)
+                                    ->orderByDesc('created_at')
+                                    ->take(5)
+                                    ->get();
 
-        } catch (\Throwable $e) {
-            $stats = [];
-            $announcements = [];
-            $schedule = [];
-            $upcomingExams = [];
-            $recentGrades = [];
-        }
+        // Recent announcements
+        $announcements = Announcement::published()
+                                    ->orderByDesc('is_pinned')
+                                    ->orderByDesc('created_at')
+                                    ->take(5)
+                                    ->get();
+
+        // Upcoming exams (based on schedules)
+        $upcomingSchedule = Schedule::whereHas('course.enrollments', function($q) use ($student) {
+                                        $q->where('student_id', $student->id)
+                                          ->where('status', 'approved');
+                                    })
+                                    ->with(['course', 'instructor'])
+                                    ->orderBy('day_of_week')
+                                    ->orderBy('start_time')
+                                    ->get();
 
         return Inertia::render('Student/Dashboard', [
-            'stats' => $stats,
-            'schedule' => $schedule,
+            'stats' => [
+                'totalCourses' => $totalCourses,
+                'pendingEnrollments' => $pendingEnrollments,
+                'gpa' => round($gpa, 2),
+                'totalCredits' => $totalCredits,
+                'unpaidFees' => $unpaidFees,
+                'unreadNotifications' => Notification::where('user_id', $student->id)->unread()->count(),
+            ],
+            'todaySchedule' => $todaySchedule,
+            'upcomingSchedule' => $upcomingSchedule,
+            'notifications' => $notifications,
             'announcements' => $announcements,
-            'upcomingExams' => $upcomingExams,
-            'recentGrades' => $recentGrades,
         ]);
     }
 }
