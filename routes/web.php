@@ -122,16 +122,37 @@ Route::middleware(['web', 'auth', 'role:admin'])->prefix('admin')->name('admin.'
     Route::resource('departments', AdminDepartmentController::class)->except(['show'])->names('departments');
 
     // Announcements (create & store)
-    Route::get('/announcements/create', [AdminAnnouncementController::class, 'create'])->name('announcements.create');
-    Route::post('/announcements', [AdminAnnouncementController::class, 'store'])->name('announcements.store');
+   Route::get('/announcements', [AdminAnnouncementController::class, 'index'])
+    ->name('announcements.index');
 
+Route::get('/announcements/create', [AdminAnnouncementController::class, 'create'])
+    ->name('announcements.create');
+
+Route::post('/announcements', [AdminAnnouncementController::class, 'store'])
+    ->name('announcements.store');
+
+Route::get('/announcements/{announcement}', [AdminAnnouncementController::class, 'show'])
+    ->name('announcements.show');
+
+Route::get('/announcements/{announcement}/edit', [AdminAnnouncementController::class, 'edit'])
+    ->name('announcements.edit');
+
+Route::put('/announcements/{announcement}', [AdminAnnouncementController::class, 'update'])
+    ->name('announcements.update');
+
+Route::delete('/announcements/{announcement}', [AdminAnnouncementController::class, 'destroy'])
+    ->name('announcements.destroy');
     // Reports
       Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
-      Route::get('/reports/{report}/create', [AdminReportController::class, 'create'])->name('reports.create');
-        Route::get('/reports/{report}', [AdminReportController::class, 'show'])->name('reports.show');
-        Route::get('/reports/{report}/download', [AdminReportController::class, 'download'])->name('reports.download');
-        Route::get('/reports/{report}/export', [AdminReportController::class, 'export'])->name('reports.export');
-        Route::delete('/reports/{report}', [AdminReportController::class, 'destroy'])->name('reports.destroy');
+Route::get('/reports/create', [AdminReportController::class, 'create'])->name('reports.create');
+Route::post('/reports', [AdminReportController::class, 'store'])->name('reports.store');
+Route::get('/reports/{report}', [AdminReportController::class, 'show'])->name('reports.show');
+Route::get('/reports/{report}/download', [AdminReportController::class, 'download'])->name('reports.download');
+Route::get('/reports/{report}/export', [AdminReportController::class, 'export'])->name('reports.export');
+Route::get('/reports/edit', [AdminReportController::class, 'edit'])->name('reports.edit');
+Route::put('/reports/{report}', [AdminReportController::class, 'update'])->name('reports.update');
+Route::delete('/reports/{report}', [AdminReportController::class, 'destroy'])->name('reports.destroy');
+
 });
 
 /*

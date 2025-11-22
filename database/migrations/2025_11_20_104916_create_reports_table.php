@@ -10,11 +10,9 @@ return new class extends Migration
     {
         Schema::create('reports', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
-            $table->string('type')->index()->comment('users,courses,departments,statistics,..');
-            $table->text('notes')->nullable();
-            $table->string('file_path')->nullable();
-            $table->json('meta')->nullable();
+            $table->string('type');
+            $table->json('data')->nullable();
+            $table->foreignId('created_by')->constrained('users');
             $table->timestamps();
         });
     }

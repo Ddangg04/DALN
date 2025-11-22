@@ -1,356 +1,726 @@
-import { Head } from "@inertiajs/react";
+// resources/js/Pages/Admin/Dashboard.jsx
+import { Head, Link } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
-export default function AdminDashboard({ stats }) {
+export default function AdminDashboard({
+    stats,
+    monthlyStats,
+    usersByRole,
+    coursesByDepartment,
+    recentUsers,
+    recentCourses,
+    recentAnnouncements,
+    recentReports,
+    activities,
+    systemHealth,
+}) {
+    // Helper functions
+    const getRoleColor = (role) => {
+        const colors = {
+            admin: "bg-red-100 text-red-800",
+            teacher: "bg-green-100 text-green-800",
+            student: "bg-blue-100 text-blue-800",
+        };
+        return colors[role] || "bg-gray-100 text-gray-800";
+    };
+
+    const getPriorityBadge = (priority) => {
+        const badges = {
+            high: { class: "bg-red-100 text-red-800", label: "Quan trọng" },
+            medium: {
+                class: "bg-orange-100 text-orange-800",
+                label: "Trung bình",
+            },
+            low: { class: "bg-green-100 text-green-800", label: "Thường" },
+        };
+        return badges[priority] || badges.medium;
+    };
+
+    const getActivityIcon = (type) => {
+        const icons = {
+            user: "👤",
+            book: "📚",
+            megaphone: "📢",
+            document: "📄",
+        };
+        return icons[type] || "ℹ️";
+    };
+
+    const getActivityColor = (color) => {
+        const colors = {
+            blue: "bg-blue-100 text-blue-600",
+            green: "bg-green-100 text-green-600",
+            yellow: "bg-yellow-100 text-yellow-600",
+            purple: "bg-purple-100 text-purple-600",
+        };
+        return colors[color] || "bg-gray-100 text-gray-600";
+    };
+
     return (
         <AuthenticatedLayout
             header={
-                <h2 className="text-2xl font-bold text-gray-800">
-                    Dashboard - Quản trị viên
-                </h2>
+                <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-gray-800">
+                        🎓 Dashboard - Tổng quan Hệ thống
+                    </h2>
+                    <div className="text-sm text-gray-600">
+                        {new Date().toLocaleDateString("vi-VN", {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                        })}
+                    </div>
+                </div>
             }
         >
             <Head title="Admin Dashboard" />
 
-            {/* Stats Cards */}
+            {/* ========== MAIN STATS CARDS ========== */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <div className="bg-white rounded-lg shadow p-6">
-                    <div className="flex items-center">
-                        <div className="p-3 rounded-full bg-blue-100 text-blue-600">
-                            <svg
-                                className="w-8 h-8"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                                />
-                            </svg>
-                        </div>
-                        <div className="ml-4">
-                            <p className="text-sm text-gray-600">
-                                Tổng sinh viên
-                            </p>
-                            <p className="text-2xl font-bold text-gray-900">
-                                {stats?.students || 0}
-                            </p>
+                {/* Total Users */}
+                <Link
+                    href={route("admin.users.index")}
+                    className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-all hover:scale-105"
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="text-4xl">👥</div>
+                        <div className="text-sm bg-blue-400 px-2 py-1 rounded">
+                            +{monthlyStats?.users || 0} tháng này
                         </div>
                     </div>
+                    <div className="text-3xl font-bold mb-1">
+                        {stats?.users || 0}
+                    </div>
+                    <div className="text-blue-100">Tổng người dùng</div>
+                </Link>
+
+                {/* Total Courses */}
+                <Link
+                    href={route("admin.courses.index")}
+                    className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-all hover:scale-105"
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="text-4xl">📚</div>
+                        <div className="text-sm bg-green-400 px-2 py-1 rounded">
+                            +{monthlyStats?.courses || 0} tháng này
+                        </div>
+                    </div>
+                    <div className="text-3xl font-bold mb-1">
+                        {stats?.courses || 0}
+                    </div>
+                    <div className="text-green-100">Tổng học phần</div>
+                </Link>
+
+                {/* Total Departments */}
+                <Link
+                    href={route("admin.departments.index")}
+                    className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-all hover:scale-105"
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="text-4xl">🏢</div>
+                        <div className="text-sm bg-purple-400 px-2 py-1 rounded">
+                            Active
+                        </div>
+                    </div>
+                    <div className="text-3xl font-bold mb-1">
+                        {stats?.departments || 0}
+                    </div>
+                    <div className="text-purple-100">Tổng khoa</div>
+                </Link>
+
+                {/* Total Announcements */}
+                <Link
+                    href={route("admin.announcements.index")}
+                    className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-all hover:scale-105"
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="text-4xl">📢</div>
+                        <div className="text-sm bg-orange-400 px-2 py-1 rounded">
+                            +{monthlyStats?.announcements || 0} tháng này
+                        </div>
+                    </div>
+                    <div className="text-3xl font-bold mb-1">
+                        {stats?.announcements || 0}
+                    </div>
+                    <div className="text-orange-100">Thông báo</div>
+                </Link>
+            </div>
+
+            {/* ========== USER BREAKDOWN BY ROLE ========== */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="bg-white rounded-lg shadow p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-gray-800">
+                            🔴 Admins
+                        </h3>
+                        <span className="text-2xl font-bold text-red-600">
+                            {stats?.admins || 0}
+                        </span>
+                    </div>
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-red-500"
+                            style={{
+                                width: `${
+                                    ((stats?.admins || 0) /
+                                        (stats?.users || 1)) *
+                                    100
+                                }%`,
+                            }}
+                        />
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2">
+                        Quản trị viên hệ thống
+                    </p>
                 </div>
 
                 <div className="bg-white rounded-lg shadow p-6">
-                    <div className="flex items-center">
-                        <div className="p-3 rounded-full bg-green-100 text-green-600">
-                            <svg
-                                className="w-8 h-8"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                                />
-                            </svg>
-                        </div>
-                        <div className="ml-4">
-                            <p className="text-sm text-gray-600">Giảng viên</p>
-                            <p className="text-2xl font-bold text-gray-900">
-                                {stats?.teachers || 0}
-                            </p>
-                        </div>
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-gray-800">
+                            🟢 Teachers
+                        </h3>
+                        <span className="text-2xl font-bold text-green-600">
+                            {stats?.teachers || 0}
+                        </span>
                     </div>
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-green-500"
+                            style={{
+                                width: `${
+                                    ((stats?.teachers || 0) /
+                                        (stats?.users || 1)) *
+                                    100
+                                }%`,
+                            }}
+                        />
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2">
+                        Giảng viên (+{monthlyStats?.teachers || 0} tháng này)
+                    </p>
                 </div>
 
                 <div className="bg-white rounded-lg shadow p-6">
-                    <div className="flex items-center">
-                        <div className="p-3 rounded-full bg-purple-100 text-purple-600">
-                            <svg
-                                className="w-8 h-8"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                                />
-                            </svg>
-                        </div>
-                        <div className="ml-4">
-                            <p className="text-sm text-gray-600">Học phần</p>
-                            <p className="text-2xl font-bold text-gray-900">
-                                {stats?.courses || 0}
-                            </p>
-                        </div>
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-gray-800">
+                            🔵 Students
+                        </h3>
+                        <span className="text-2xl font-bold text-blue-600">
+                            {stats?.students || 0}
+                        </span>
+                    </div>
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-blue-500"
+                            style={{
+                                width: `${
+                                    ((stats?.students || 0) /
+                                        (stats?.users || 1)) *
+                                    100
+                                }%`,
+                            }}
+                        />
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2">
+                        Sinh viên (+{monthlyStats?.students || 0} tháng này)
+                    </p>
+                </div>
+            </div>
+
+            {/* ========== COURSE STATS ========== */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div className="bg-white rounded-lg shadow p-4">
+                    <div className="text-sm text-gray-600">
+                        Học phần hoạt động
+                    </div>
+                    <div className="text-2xl font-bold text-green-600">
+                        {stats?.activeCourses || 0}
                     </div>
                 </div>
-
-                <div className="bg-white rounded-lg shadow p-6">
-                    <div className="flex items-center">
-                        <div className="p-3 rounded-full bg-orange-100 text-orange-600">
-                            <svg
-                                className="w-8 h-8"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                                />
-                            </svg>
-                        </div>
-                        <div className="ml-4">
-                            <p className="text-sm text-gray-600">Khoa</p>
-                            <p className="text-2xl font-bold text-gray-900">
-                                {stats?.departments || 0}
-                            </p>
-                        </div>
+                <div className="bg-white rounded-lg shadow p-4">
+                    <div className="text-sm text-gray-600">
+                        Học phần bắt buộc
+                    </div>
+                    <div className="text-2xl font-bold text-red-600">
+                        {stats?.requiredCourses || 0}
+                    </div>
+                </div>
+                <div className="bg-white rounded-lg shadow p-4">
+                    <div className="text-sm text-gray-600">
+                        Học phần tự chọn
+                    </div>
+                    <div className="text-2xl font-bold text-blue-600">
+                        {stats?.electiveCourses || 0}
+                    </div>
+                </div>
+                <div className="bg-white rounded-lg shadow p-4">
+                    <div className="text-sm text-gray-600">
+                        Báo cáo tháng này
+                    </div>
+                    <div className="text-2xl font-bold text-purple-600">
+                        {stats?.reportsThisMonth || 0}
                     </div>
                 </div>
             </div>
 
-            {/* Charts & Recent Activity */}
+            {/* ========== MAIN CONTENT GRID ========== */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 {/* Recent Users */}
                 <div className="bg-white rounded-lg shadow">
-                    <div className="p-6 border-b">
+                    <div className="p-6 border-b flex justify-between items-center">
                         <h3 className="text-lg font-semibold text-gray-900">
-                            Người dùng mới
+                            👤 Người dùng mới
                         </h3>
+                        <Link
+                            href={route("admin.users.index")}
+                            className="text-sm text-blue-600 hover:text-blue-700"
+                        >
+                            Xem tất cả →
+                        </Link>
                     </div>
                     <div className="p-6">
-                        <div className="space-y-4">
-                            {stats?.recentUsers?.map((user, index) => (
-                                <div
-                                    key={index}
-                                    className="flex items-center justify-between"
-                                >
-                                    <div className="flex items-center">
-                                        <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                                            {user.name.charAt(0).toUpperCase()}
+                        {!recentUsers || recentUsers.length === 0 ? (
+                            <p className="text-center text-gray-500 py-8">
+                                Chưa có người dùng mới
+                            </p>
+                        ) : (
+                            <div className="space-y-4">
+                                {recentUsers.map((user) => (
+                                    <div
+                                        key={user.id}
+                                        className="flex items-center justify-between hover:bg-gray-50 p-2 rounded transition-colors"
+                                    >
+                                        <div className="flex items-center">
+                                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                                                {user.avatar}
+                                            </div>
+                                            <div className="ml-3">
+                                                <p className="text-sm font-medium text-gray-900">
+                                                    {user.name}
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                    {user.email}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div className="ml-3">
-                                            <p className="text-sm font-medium text-gray-900">
-                                                {user.name}
-                                            </p>
-                                            <p className="text-xs text-gray-500">
-                                                {user.email}
+                                        <div className="text-right">
+                                            <span
+                                                className={`px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(
+                                                    user.role
+                                                )}`}
+                                            >
+                                                {user.role}
+                                            </span>
+                                            <p className="text-xs text-gray-400 mt-1">
+                                                {user.created_at}
                                             </p>
                                         </div>
                                     </div>
-                                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 capitalize">
-                                        {user.role}
-                                    </span>
-                                </div>
-                            )) || (
-                                <p className="text-sm text-gray-500">
-                                    Chưa có người dùng mới
-                                </p>
-                            )}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* System Activity */}
+                {/* Recent Courses */}
                 <div className="bg-white rounded-lg shadow">
-                    <div className="p-6 border-b">
+                    <div className="p-6 border-b flex justify-between items-center">
                         <h3 className="text-lg font-semibold text-gray-900">
-                            Hoạt động hệ thống
+                            📚 Học phần mới
                         </h3>
+                        <Link
+                            href={route("admin.courses.index")}
+                            className="text-sm text-blue-600 hover:text-blue-700"
+                        >
+                            Xem tất cả →
+                        </Link>
                     </div>
                     <div className="p-6">
-                        <div className="space-y-4">
-                            <div className="flex items-start">
-                                <div className="flex-shrink-0">
-                                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                        <svg
-                                            className="w-4 h-4 text-green-600"
-                                            fill="currentColor"
-                                            viewBox="0 0 20 20"
-                                        >
-                                            <path
-                                                fillRule="evenodd"
-                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                                clipRule="evenodd"
-                                            />
-                                        </svg>
+                        {!recentCourses || recentCourses.length === 0 ? (
+                            <p className="text-center text-gray-500 py-8">
+                                Chưa có học phần mới
+                            </p>
+                        ) : (
+                            <div className="space-y-4">
+                                {recentCourses.map((course) => (
+                                    <div
+                                        key={course.id}
+                                        className="flex items-center justify-between hover:bg-gray-50 p-2 rounded transition-colors"
+                                    >
+                                        <div className="flex-1">
+                                            <div className="flex items-center space-x-2">
+                                                <span className="font-mono text-sm font-bold text-gray-700">
+                                                    {course.code}
+                                                </span>
+                                                <span
+                                                    className={`px-2 py-0.5 text-xs rounded-full ${
+                                                        course.type ===
+                                                        "required"
+                                                            ? "bg-red-100 text-red-800"
+                                                            : "bg-blue-100 text-blue-800"
+                                                    }`}
+                                                >
+                                                    {course.type === "required"
+                                                        ? "Bắt buộc"
+                                                        : "Tự chọn"}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm text-gray-900 mt-1">
+                                                {course.name}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                {course.department || "—"} •{" "}
+                                                {course.credits} TC
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <span
+                                                className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                                    course.is_active
+                                                        ? "bg-green-100 text-green-800"
+                                                        : "bg-gray-100 text-gray-800"
+                                                }`}
+                                            >
+                                                {course.is_active
+                                                    ? "Active"
+                                                    : "Inactive"}
+                                            </span>
+                                            <p className="text-xs text-gray-400 mt-1">
+                                                {course.created_at}
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="ml-3 flex-1">
-                                    <p className="text-sm text-gray-900">
-                                        Backup dữ liệu thành công
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                        2 giờ trước
-                                    </p>
-                                </div>
+                                ))}
                             </div>
+                        )}
+                    </div>
+                </div>
 
-                            <div className="flex items-start">
-                                <div className="flex-shrink-0">
-                                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <svg
-                                            className="w-4 h-4 text-blue-600"
-                                            fill="currentColor"
-                                            viewBox="0 0 20 20"
+                {/* Recent Announcements */}
+                <div className="bg-white rounded-lg shadow">
+                    <div className="p-6 border-b flex justify-between items-center">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                            📢 Thông báo gần đây
+                        </h3>
+                        <Link
+                            href={route("admin.announcements.index")}
+                            className="text-sm text-blue-600 hover:text-blue-700"
+                        >
+                            Xem tất cả →
+                        </Link>
+                    </div>
+                    <div className="p-6">
+                        {!recentAnnouncements ||
+                        recentAnnouncements.length === 0 ? (
+                            <p className="text-center text-gray-500 py-8">
+                                Chưa có thông báo
+                            </p>
+                        ) : (
+                            <div className="space-y-4">
+                                {recentAnnouncements.map((announcement) => {
+                                    const badge = getPriorityBadge(
+                                        announcement.priority
+                                    );
+                                    return (
+                                        <div
+                                            key={announcement.id}
+                                            className="border-l-4 border-blue-500 bg-gray-50 p-3 rounded hover:bg-gray-100 transition-colors"
                                         >
-                                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                                            <path
-                                                fillRule="evenodd"
-                                                d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                                                clipRule="evenodd"
-                                            />
-                                        </svg>
-                                    </div>
-                                </div>
-                                <div className="ml-3 flex-1">
-                                    <p className="text-sm text-gray-900">
-                                        Admin đăng nhập hệ thống
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                        5 giờ trước
-                                    </p>
-                                </div>
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center space-x-2 mb-1">
+                                                        {announcement.is_pinned && (
+                                                            <span className="text-yellow-500">
+                                                                📌
+                                                            </span>
+                                                        )}
+                                                        <h4 className="font-semibold text-gray-900 text-sm">
+                                                            {announcement.title}
+                                                        </h4>
+                                                    </div>
+                                                    <p className="text-xs text-gray-600 line-clamp-2">
+                                                        {announcement.content}
+                                                    </p>
+                                                    <div className="flex items-center space-x-2 mt-2">
+                                                        <span
+                                                            className={`px-2 py-0.5 text-xs font-semibold rounded-full ${badge.class}`}
+                                                        >
+                                                            {badge.label}
+                                                        </span>
+                                                        <span className="text-xs text-gray-400">
+                                                            {
+                                                                announcement.author
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <p className="text-xs text-gray-400 ml-2">
+                                                    {announcement.created_at}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
+                        )}
+                    </div>
+                </div>
 
-                            <div className="flex items-start">
-                                <div className="flex-shrink-0">
-                                    <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                                        <svg
-                                            className="w-4 h-4 text-yellow-600"
-                                            fill="currentColor"
-                                            viewBox="0 0 20 20"
-                                        >
-                                            <path
-                                                fillRule="evenodd"
-                                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                                                clipRule="evenodd"
-                                            />
-                                        </svg>
-                                    </div>
-                                </div>
-                                <div className="ml-3 flex-1">
-                                    <p className="text-sm text-gray-900">
-                                        Cập nhật hệ thống
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                        1 ngày trước
-                                    </p>
-                                </div>
+                {/* Recent Reports */}
+                <div className="bg-white rounded-lg shadow">
+                    <div className="p-6 border-b flex justify-between items-center">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                            📊 Báo cáo gần đây
+                        </h3>
+                        <Link
+                            href={route("admin.reports.index")}
+                            className="text-sm text-blue-600 hover:text-blue-700"
+                        >
+                            Xem tất cả →
+                        </Link>
+                    </div>
+                    <div className="p-6">
+                        {!recentReports || recentReports.length === 0 ? (
+                            <p className="text-center text-gray-500 py-8">
+                                Chưa có báo cáo
+                            </p>
+                        ) : (
+                            <div className="space-y-3">
+                                {recentReports.map((report) => (
+                                    <Link
+                                        key={report.id}
+                                        href={route(
+                                            "admin.reports.show",
+                                            report.id
+                                        )}
+                                        className="flex items-center justify-between p-3 hover:bg-gray-50 rounded transition-colors"
+                                    >
+                                        <div className="flex items-center flex-1">
+                                            <div className="w-8 h-8 bg-purple-100 rounded flex items-center justify-center text-purple-600">
+                                                📄
+                                            </div>
+                                            <div className="ml-3">
+                                                <p className="text-sm font-medium text-gray-900">
+                                                    {report.title}
+                                                </p>
+                                                <p className="text-xs text-gray-500 capitalize">
+                                                    {report.type}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-gray-400">
+                                            {report.created_at}
+                                        </p>
+                                    </Link>
+                                ))}
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="bg-white rounded-lg shadow">
+            {/* ========== ACTIVITY LOG ========== */}
+            <div className="bg-white rounded-lg shadow mb-6">
                 <div className="p-6 border-b">
                     <h3 className="text-lg font-semibold text-gray-900">
-                        Thao tác nhanh
+                        📋 Hoạt động gần đây (7 ngày)
+                    </h3>
+                </div>
+                <div className="p-6">
+                    {!activities || activities.length === 0 ? (
+                        <p className="text-center text-gray-500 py-8">
+                            Chưa có hoạt động nào
+                        </p>
+                    ) : (
+                        <div className="space-y-4">
+                            {activities.map((activity, index) => (
+                                <div key={index} className="flex items-start">
+                                    <div className="flex-shrink-0">
+                                        <div
+                                            className={`w-10 h-10 rounded-full flex items-center justify-center ${getActivityColor(
+                                                activity.color
+                                            )}`}
+                                        >
+                                            <span className="text-xl">
+                                                {getActivityIcon(activity.icon)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="ml-4 flex-1">
+                                        <p className="text-sm font-medium text-gray-900">
+                                            {activity.title}
+                                        </p>
+                                        <p className="text-xs text-gray-600">
+                                            {activity.description}
+                                        </p>
+                                        <p className="text-xs text-gray-400 mt-1">
+                                            {new Date(
+                                                activity.time
+                                            ).toLocaleString("vi-VN")}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* ========== QUICK ACTIONS ========== */}
+            <div className="bg-white rounded-lg shadow mb-6">
+                <div className="p-6 border-b">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                        ⚡ Thao tác nhanh
                     </h3>
                 </div>
                 <div className="p-6">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <a
+                        <Link
                             href={route("admin.users.create")}
-                            className="flex flex-col items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                            className="flex flex-col items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all"
                         >
-                            <svg
-                                className="w-8 h-8 text-gray-400 mb-2"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                                />
-                            </svg>
+                            <div className="text-4xl mb-2">👤</div>
                             <span className="text-sm font-medium text-gray-700">
                                 Thêm người dùng
                             </span>
-                        </a>
+                        </Link>
 
-                        <a
+                        <Link
                             href={route("admin.courses.create")}
-                            className="flex flex-col items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                            className="flex flex-col items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all"
                         >
-                            <svg
-                                className="w-8 h-8 text-gray-400 mb-2"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                                />
-                            </svg>
+                            <div className="text-4xl mb-2">📚</div>
                             <span className="text-sm font-medium text-gray-700">
                                 Thêm học phần
                             </span>
-                        </a>
+                        </Link>
 
-                        <a
+                        <Link
                             href={route("admin.announcements.create")}
-                            className="flex flex-col items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                            className="flex flex-col items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-all"
                         >
-                            <svg
-                                className="w-8 h-8 text-gray-400 mb-2"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
-                                />
-                            </svg>
+                            <div className="text-4xl mb-2">📢</div>
                             <span className="text-sm font-medium text-gray-700">
                                 Đăng thông báo
                             </span>
-                        </a>
+                        </Link>
 
-                        <a
-                            href={route("admin.reports.index")}
-                            className="flex flex-col items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                        <Link
+                            href={route("admin.reports.create")}
+                            className="flex flex-col items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all"
                         >
-                            <svg
-                                className="w-8 h-8 text-gray-400 mb-2"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                />
-                            </svg>
+                            <div className="text-4xl mb-2">📊</div>
                             <span className="text-sm font-medium text-gray-700">
-                                Xem báo cáo
+                                Tạo báo cáo
                             </span>
-                        </a>
+                        </Link>
+                    </div>
+                </div>
+            </div>
+
+            {/* ========== SYSTEM HEALTH ========== */}
+            {systemHealth && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    {/* Storage Info */}
+                    <div className="bg-white rounded-lg shadow p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                            💾 Bộ nhớ hệ thống
+                        </h3>
+                        <div className="space-y-3">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">
+                                    Tổng dung lượng
+                                </span>
+                                <span className="font-semibold">
+                                    {systemHealth.storage?.total}
+                                </span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">
+                                    Đã sử dụng
+                                </span>
+                                <span className="font-semibold text-blue-600">
+                                    {systemHealth.storage?.used}
+                                </span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Còn trống</span>
+                                <span className="font-semibold text-green-600">
+                                    {systemHealth.storage?.free}
+                                </span>
+                            </div>
+                            <div className="mt-4">
+                                <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-blue-500"
+                                        style={{
+                                            width: `${
+                                                systemHealth.storage
+                                                    ?.percentage || 0
+                                            }%`,
+                                        }}
+                                    />
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    {systemHealth.storage?.percentage}% đã sử
+                                    dụng
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Database Info */}
+                    <div className="bg-white rounded-lg shadow p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                            🗄️ Cơ sở dữ liệu
+                        </h3>
+                        <div className="space-y-3">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">
+                                    Số lượng bảng
+                                </span>
+                                <span className="font-semibold">
+                                    {systemHealth.database?.tables}
+                                </span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">
+                                    Kích thước DB
+                                </span>
+                                <span className="font-semibold text-purple-600">
+                                    {systemHealth.database?.size}
+                                </span>
+                            </div>
+                            <div className="mt-4 p-3 bg-green-50 rounded">
+                                <div className="flex items-center">
+                                    <div className="w-3 h-3 bg-green-500 rounded-full mr-2 animate-pulse" />
+                                    <span className="text-sm text-green-700 font-medium">
+                                        Kết nối bình thường
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ========== FOOTER INFO ========== */}
+            <div className="bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-lg shadow-lg p-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="text-lg font-bold mb-2">
+                            🎓 Hệ thống Quản lý Trường Đại học
+                        </h3>
+                        <p className="text-gray-300 text-sm">
+                            Phiên bản 1.0 - Dashboard Admin
+                        </p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-sm text-gray-300">
+                            Cập nhật lần cuối:{" "}
+                            {new Date().toLocaleString("vi-VN")}
+                        </p>
                     </div>
                 </div>
             </div>

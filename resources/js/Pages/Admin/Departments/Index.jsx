@@ -475,7 +475,7 @@ export default function DepartmentsIndex({ departments, filters }) {
                                     <div className="flex justify-between space-x-2 pt-4 border-t border-gray-100">
                                         <Link
                                             href={route(
-                                                "admin.departments.show",
+                                                "admin.departments.index",
                                                 dept.id
                                             )}
                                             className="flex-1 flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"

@@ -2,14 +2,14 @@ import { Head, router } from "@inertiajs/react";
 import { useState } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
-export default function ReportsCreate({ auth }) {
-    const [title, setTitle] = useState("");
-    const [type, setType] = useState("statistics");
-    const [content, setContent] = useState("");
+export default function ReportsEdit({ report }) {
+    const [title, setTitle] = useState(report?.title ?? "");
+    const [type, setType] = useState(report?.type ?? "statistics");
+    const [content, setContent] = useState(report?.content ?? "");
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        router.post(route("admin.reports.store"), {
+        router.put(route("admin.reports.update", report.id), {
             title,
             type,
             content,
@@ -17,8 +17,8 @@ export default function ReportsCreate({ auth }) {
     };
 
     return (
-        <AuthenticatedLayout header={<h2 className="text-2xl">Tạo báo cáo</h2>}>
-            <Head title="Tạo báo cáo" />
+        <AuthenticatedLayout header={<h2 className="text-2xl">Sửa báo cáo</h2>}>
+            <Head title="Sửa báo cáo" />
 
             <div className="bg-white rounded-lg shadow p-6">
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -56,9 +56,19 @@ export default function ReportsCreate({ auth }) {
                         />
                     </div>
 
-                    <div className="flex justify-end">
+                    <div className="flex justify-between">
+                        <button
+                            type="button"
+                            onClick={() =>
+                                router.visit(route("admin.reports.index"))
+                            }
+                            className="px-4 py-2 border rounded-lg"
+                        >
+                            Hủy
+                        </button>
+
                         <button className="bg-blue-600 text-white px-4 py-2 rounded-lg">
-                            Lưu báo cáo
+                            Cập nhật
                         </button>
                     </div>
                 </form>

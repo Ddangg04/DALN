@@ -21,6 +21,13 @@ export default function ReportsIndex({ reports = [], filters = {} }) {
         }
     };
 
+    // --- SAFETY: reports may be an array OR a paginator object { data: [...] }
+    const reportsList = Array.isArray(reports)
+        ? reports
+        : reports && Array.isArray(reports.data)
+        ? reports.data
+        : [];
+
     return (
         <AuthenticatedLayout
             header={
@@ -109,7 +116,7 @@ export default function ReportsIndex({ reports = [], filters = {} }) {
                     </thead>
 
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {reports.length === 0 ? (
+                        {reportsList.length === 0 ? (
                             <tr>
                                 <td
                                     colSpan="4"
@@ -119,7 +126,7 @@ export default function ReportsIndex({ reports = [], filters = {} }) {
                                 </td>
                             </tr>
                         ) : (
-                            reports.map((r) => (
+                            reportsList.map((r) => (
                                 <tr key={r.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 font-medium text-gray-900">
                                         {r.title}

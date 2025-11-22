@@ -1,18 +1,20 @@
 import { Head, Link, useForm } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
-export default function AnnouncementsCreate() {
-    const { data, setData, post, processing, errors } = useForm({
-        title: "",
-        content: "",
-        priority: "medium",
-        is_pinned: false,
-        published_at: new Date().toISOString().slice(0, 16),
+export default function AnnouncementsEdit({ announcement }) {
+    const { data, setData, put, processing, errors } = useForm({
+        title: announcement.title || "",
+        content: announcement.content || "",
+        priority: announcement.priority || "medium",
+        is_pinned: announcement.is_pinned || false,
+        published_at: announcement.published_at
+            ? new Date(announcement.published_at).toISOString().slice(0, 16)
+            : new Date().toISOString().slice(0, 16),
     });
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route("admin.announcements.store"));
+        put(route("admin.announcements.update", announcement.id));
     };
 
     return (
@@ -20,7 +22,7 @@ export default function AnnouncementsCreate() {
             header={
                 <div className="flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-gray-800">
-                        Thêm Thông báo mới
+                        Chỉnh sửa Thông báo
                     </h2>
                     <Link
                         href={route("admin.announcements.index")}
@@ -31,7 +33,7 @@ export default function AnnouncementsCreate() {
                 </div>
             }
         >
-            <Head title="Thêm thông báo" />
+            <Head title="Chỉnh sửa thông báo" />
 
             <div className="bg-white rounded-lg shadow">
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -138,6 +140,20 @@ export default function AnnouncementsCreate() {
                         </label>
                     </div>
 
+                    {/* Author Info */}
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">
+                            <strong>Người tạo:</strong>{" "}
+                            {announcement.author?.name || "—"}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">
+                            <strong>Ngày tạo:</strong>{" "}
+                            {new Date(announcement.created_at).toLocaleString(
+                                "vi-VN"
+                            )}
+                        </p>
+                    </div>
+
                     {/* Buttons */}
                     <div className="flex justify-end space-x-3 pt-4 border-t">
                         <Link
@@ -151,7 +167,7 @@ export default function AnnouncementsCreate() {
                             disabled={processing}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
                         >
-                            {processing ? "Đang lưu..." : "Tạo thông báo"}
+                            {processing ? "Đang lưu..." : "Cập nhật"}
                         </button>
                     </div>
                 </form>

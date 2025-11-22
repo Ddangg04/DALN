@@ -6,22 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('classrooms', function (Blueprint $table) {
+        Schema::create('departments', function (Blueprint $table) {
             $table->id();
+            $table->string('code')->unique();          // Mã khoa
+            $table->string('name');                    // Tên khoa
+            $table->text('description')->nullable();   // Mô tả
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('classrooms');
+        Schema::dropIfExists('departments');
     }
 };

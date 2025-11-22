@@ -92,7 +92,7 @@ export default function AuthenticatedLayout({ header, children }) {
             },
             {
                 name: "Thông báo",
-                routeName: "admin.announcements.create",
+                routeName: "admin.announcements.index",
                 icon: "megaphone",
             },
             {
