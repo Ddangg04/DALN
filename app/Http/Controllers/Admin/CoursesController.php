@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http\Controllers\Admin;
-
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Course;
@@ -62,9 +61,8 @@ class CoursesController extends Controller
             'departments' => $departments,
             'teachers' => $teachers,
         ]);
-}
-
-public function store(Request $request)
+    }
+    public function store(Request $request)
     {
         // LOGGING ĐẦY ĐỦ
         Log::info('========================================');
