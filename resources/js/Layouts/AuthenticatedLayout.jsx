@@ -115,17 +115,17 @@ export default function AuthenticatedLayout({ header, children }) {
             },
             {
                 name: "Điểm danh",
-                routeName: "teacher.attendance.index",
+                routeName: "teacher.attendance.list",
                 icon: "check",
             },
             {
                 name: "Quản lý điểm",
-                routeName: "teacher.grades.index",
+                routeName: "teacher.grades.list",
                 icon: "grade",
             },
             {
                 name: "Lịch giảng dạy",
-                routeName: "teacher.schedule",
+                routeName: "teacher.schedule.index",
                 icon: "calendar",
             },
             {

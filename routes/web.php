@@ -45,7 +45,7 @@ Route::get('/', function () {
         return match ($role) {
             'admin' => redirect()->route('admin.dashboard'),
             'administrator' => redirect()->route('admin.dashboard'),
-            'teacher', 'giang-vien', 'giangvien', 'chu-nhiem', 'pho-truong-khoa' => redirect()->route('giangvien.dashboard'),
+            'teacher', 'giang-vien', 'giangvien', 'chu-nhiem', 'pho-truong-khoa' => redirect()->route('teacher.dashboard'),
             'student', 'sinh-vien', 'sinhvien', 'lop-truong' => redirect()->route('student.dashboard'),
             default => redirect()->route('login'),
         };
@@ -170,17 +170,36 @@ Route::middleware(['auth', 'role:teacher'])->prefix('teacher')->name('teacher.')
     // Class Sessions (Quản lý Lớp học phần)
     Route::get('/classes', [ClassSessionController::class, 'index'])->name('classes.index');
     Route::get('/classes/{classSession}', [ClassSessionController::class, 'show'])->name('classes.show');
-    Route::get('/classes/{classSession}/students', [ClassSessionController::class, 'students'])->name('classes.students');
+    Route::get('/classes/students', [ClassSessionController::class, 'students'])->name('classes.students');
     
     // Attendance (Điểm danh)
-    Route::get('/classes/{classSession}/attendance', [TeacherAttendanceController::class, 'index'])->name('attendance.index');
-    Route::post('/classes/{classSession}/attendance', [TeacherAttendanceController::class, 'store'])->name('attendance.store');
-
+    Route::get('/attendance', [TeacherAttendanceController::class, 'classList'])->name('attendance.list'); // Danh sách lớp
+    Route::get('/attendance/{classSession}', [TeacherAttendanceController::class, 'index'])->name('attendance.index'); // Điểm danh
+    Route::post('/attendance/{classSession}', [TeacherAttendanceController::class, 'store'])->name('attendance.store');
     // Grades (Quản lý Điểm số)
-    Route::get('/classes/{classSession}/grades', [GradeController::class, 'index'])->name('grades.index');
-    Route::put('/grades/{enrollment}', [GradeController::class, 'update'])->name('grades.update');
-    Route::get('/classes/{classSession}/grades/export', [GradeController::class, 'export'])->name('grades.export');
-    
+   Route::prefix('grades')->name('grades.')->group(function () {
+        // Danh sách lớp để chấm điểm
+        Route::get('/', [GradeController::class, 'classList'])->name('list');
+        
+        // Quản lý điểm của 1 lớp
+        Route::get('/{classSession}', [GradeController::class, 'index'])->name('index');
+        Route::post('/{classSession}', [GradeController::class, 'store'])->name('store');
+        Route::put('/{grade}', [GradeController::class, 'update'])->name('update');
+        
+        // Tính điểm chuyên cần tự động
+        Route::post('/{classSession}/calculate-attendance', [GradeController::class, 'calculateAttendance'])
+            ->name('calculate-attendance');
+        
+        // Lock/Unlock grades
+        Route::post('/{classSession}/lock', [GradeController::class, 'lock'])->name('lock');
+        Route::post('/{classSession}/unlock', [GradeController::class, 'unlock'])->name('unlock');
+        
+        // Export
+        Route::get('/{classSession}/export', [GradeController::class, 'export'])->name('export');
+        
+        // Statistics
+        Route::get('/{classSession}/statistics', [GradeController::class, 'statistics'])->name('statistics');
+    });
     // Assignments (Bài tập)
     Route::resource('assignments', AssignmentController::class);
     Route::post('/submissions/{submission}/grade', [AssignmentController::class, 'gradeSubmission'])->name('submissions.grade');
