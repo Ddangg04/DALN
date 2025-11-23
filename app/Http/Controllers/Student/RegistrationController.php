@@ -56,78 +56,65 @@ class RegistrationController extends Controller
         ]);
     }
 
-    public function store(Request $request)
-    {
-        $student = Auth::user();
+public function store(Request $request)
+{
+    $student = Auth::user();
 
-        $validated = $request->validate([
-            'course_id' => 'required|exists:courses,id',
-            'class_session_id' => 'nullable|exists:class_sessions,id',
-        ]);
+    $validated = $request->validate([
+        'course_id' => 'required|exists:courses,id',
+        'class_session_id' => 'nullable|exists:class_sessions,id', // optional: allow student pick session
+    ]);
 
-        // only check pending/approved
-        $existing = Enrollment::where('student_id', $student->id)
-            ->where('course_id', $validated['course_id'])
-            ->whereIn('status', ['pending', 'approved'])
-            ->first();
+    // check existing enrollment for same course (not considering class_session)
+    $existing = Enrollment::where('student_id', $student->id)
+                         ->where('course_id', $validated['course_id'])
+                         ->first();
 
-        if ($existing) {
-            return back()->with('error', 'Bạn đã đăng ký học phần này rồi!');
-        }
-
-        $course = Course::findOrFail($validated['course_id']);
-
-        // capacity check by counting approved
-        $currentEnrollments = Enrollment::where('course_id', $course->id)
-            ->where('status', 'approved')
-            ->count();
-
-        if ($course->max_students && $currentEnrollments >= $course->max_students) {
-            return back()->with('error', 'Học phần đã đầy!');
-        }
-
-        $sessionId = $validated['class_session_id'] ?? null;
-
-        // validate provided session exists and belongs to course
-        if ($sessionId) {
-            $session = ClassSession::where('id', $sessionId)
-                        ->where('course_id', $course->id)
-                        ->first();
-            if (!$session) $sessionId = null;
-        }
-
-        // auto assign if none provided: find first session with capacity
-        if (!$sessionId) {
-            $session = $course->classSessions()->get()->first(function($s){
-                $count = $s->enrollments()->whereIn('status', ['pending','approved'])->count();
-                return !$s->max_students || $count < $s->max_students;
-            });
-            $sessionId = $session->id ?? null;
-        }
-
-        Enrollment::create([
-            'student_id' => $student->id,
-            'course_id' => $course->id,
-            'class_session_id' => $sessionId,
-            'status' => 'pending',
-        ]);
-
-        // update enrolled_count for session if assigned
-        if ($sessionId) {
-            $session = ClassSession::find($sessionId);
-            if ($session) $session->updateEnrolledCount();
-        }
-
-        Notification::create([
-            'user_id' => $student->id,
-            'type' => 'enrollment',
-            'title' => 'Đăng ký học phần',
-            'message' => "Bạn đã đăng ký học phần {$course->name} thành công. Vui lòng chờ phê duyệt.",
-            'content' => "Bạn đã đăng ký học phần {$course->name} thành công.",
-        ]);
-
-        return back()->with('success', 'Đăng ký học phần thành công!');
+    if ($existing) {
+        return back()->with('error', 'Bạn đã đăng ký học phần này rồi!');
     }
+
+    $course = Course::find($validated['course_id']);
+
+    // choose session: if client sent class_session_id use it, else pick first active session of course
+    $session = null;
+    if (!empty($validated['class_session_id'])) {
+        $session = ClassSession::find($validated['class_session_id']);
+    } else {
+        $session = ClassSession::where('course_id', $course->id)->where('status','active')->first();
+    }
+
+    // if course has capacity / session capacity check
+    if ($course->max_students && $course->enrollments()->where('status','approved')->count() >= $course->max_students) {
+        return back()->with('error', 'Học phần đã đầy!');
+    }
+    if ($session && $session->max_students && $session->enrollments()->where('status','approved')->count() >= $session->max_students) {
+        return back()->with('error', 'Lớp đã đầy!');
+    }
+
+    $enrollment = Enrollment::create([
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'class_session_id' => $session ? $session->id : null,
+        'status' => 'pending',
+    ]);
+
+    // optionally: if you want immediate approved for testing, set 'approved' and update counts
+    // update enrolled_count for session
+    if ($session) {
+        $session->update(['enrolled_count' => $session->enrollments()->where('status','approved')->count()]);
+    }
+
+    // Create notification (model Notification assumed)
+    Notification::create([
+        'user_id' => $student->id,
+        'type' => 'enrollment',
+        'title' => 'Đăng ký học phần',
+        'message' => "Bạn đã đăng ký học phần {$course->name} thành công. Vui lòng chờ phê duyệt.",
+    ]);
+
+    return back()->with('success', 'Đăng ký học phần thành công!');
+}
 
     public function destroy(Enrollment $enrollment)
     {

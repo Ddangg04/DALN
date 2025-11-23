@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -14,61 +15,62 @@ use Inertia\Inertia;
 
 class CoursesController extends Controller
 {
-    public function index(Request $request)
-    {
-        $query = Course::query();
+   public function index(Request $request)
+{
+    $query = Course::query();
 
-        // Search
-        if ($search = $request->input('search')) {
-            $query->search($search);
-        }
-
-        // Filter by department
-        if ($departmentId = $request->input('department_id')) {
-            $query->where('department_id', $departmentId);
-        }
-
-        // Filter by type
-        if ($type = $request->input('type')) {
-            $query->where('type', $type);
-        }
-
-        // Filter by status
-        if ($request->has('is_active')) {
-            $query->where('is_active', $request->boolean('is_active'));
-        }
-
-        $courses = $query->with(['department', 'classSessions'])
-                        ->orderByDesc('created_at')
-                        ->paginate(15)
-                        ->withQueryString();
-
-        $departments = Department::orderBy('name')->get();
-
-        return Inertia::render('Admin/Courses/Index', [
-            'courses' => $courses,
-            'departments' => $departments,
-            'filters' => $request->only(['search', 'department_id', 'type', 'is_active']),
-        ]);
+    if ($search = $request->input('search')) {
+        $query->search($search);
     }
+    if ($departmentId = $request->input('department_id')) {
+        $query->where('department_id', $departmentId);
+    }
+    if ($type = $request->input('type')) {
+        $query->where('type', $type);
+    }
+    if ($request->has('is_active')) {
+        $query->where('is_active', $request->boolean('is_active'));
+    }
+
+    $courses = $query->with([
+                'department',
+                'classSessions' => function($q) {
+                    $q->with(['teacher','schedules']);
+                }
+            ])
+            ->orderByDesc('created_at')
+            ->paginate(15)
+            ->withQueryString();
+
+    $departments = Department::orderBy('name')->get();
+
+    return Inertia::render('Admin/Courses/Index', [
+        'courses' => $courses,
+        'departments' => $departments,
+        'filters' => $request->only(['search','department_id','type','is_active','page','class_session_id']),
+    ]);
+}
 
     public function create()
     {
         $departments = Department::orderBy('name')->get();
-        $teachers = User::role('teacher')->select('id','name')->orderBy('name')->get();
+
+        // Teachers list (assumes spatie roles). If not using spatie, adapt query.
+        $teachers = User::role('teacher')->select('id','name')->get();
 
         return Inertia::render('Admin/Courses/Create', [
             'departments' => $departments,
             'teachers' => $teachers,
         ]);
-    }
+}
 
-    public function store(Request $request)
+public function store(Request $request)
     {
-        // Log request để debug
-        Log::info('=== COURSE CREATION START ===', [
-            'request_data' => $request->all(),
-        ]);
+        // LOGGING ĐẦY ĐỦ
+        Log::info('========================================');
+        Log::info('COURSE CREATION STARTED');
+        Log::info('Request Data:', $request->all());
+        Log::info('========================================');
 
         try {
             // Validation
@@ -78,89 +80,135 @@ class CoursesController extends Controller
                 'description' => 'nullable|string',
                 'credits' => 'required|integer|min:1|max:10',
                 'type' => 'required|in:required,elective',
-                'is_active' => 'boolean',
+                'is_active' => 'nullable|boolean',
                 'department_id' => 'nullable|exists:departments,id',
                 'max_students' => 'nullable|integer|min:1',
                 'semester' => 'nullable|string|in:Fall,Spring,Summer',
                 'year' => 'nullable|integer|min:2020|max:2100',
                 'tuition' => 'nullable|numeric|min:0',
-
-                // Class sessions
                 'class_sessions' => 'nullable|array',
                 'class_sessions.*.class_code' => 'nullable|string|max:10',
                 'class_sessions.*.teacher_id' => 'nullable|exists:users,id',
                 'class_sessions.*.max_students' => 'nullable|integer|min:1',
-                
-                // Schedules
                 'class_sessions.*.schedules' => 'nullable|array',
-                'class_sessions.*.schedules.*.day_of_week' => 'required_with:class_sessions.*.schedules|string',
-                'class_sessions.*.schedules.*.start_time' => 'required_with:class_sessions.*.schedules|string',
-                'class_sessions.*.schedules.*.end_time' => 'required_with:class_sessions.*.schedules|string',
+                'class_sessions.*.schedules.*.day_of_week' => 'nullable|string',
+                'class_sessions.*.schedules.*.start_time' => 'nullable|string',
+                'class_sessions.*.schedules.*.end_time' => 'nullable|string',
                 'class_sessions.*.schedules.*.room' => 'nullable|string|max:50',
-            ], [
-                'code.required' => 'Mã học phần là bắt buộc',
-                'code.unique' => 'Mã học phần đã tồn tại',
-                'name.required' => 'Tên học phần là bắt buộc',
-                'credits.required' => 'Số tín chỉ là bắt buộc',
             ]);
 
-            DB::beginTransaction();
+            Log::info('Validation passed', ['validated_data' => $validated]);
 
-            // Tạo course
-            $course = Course::create([
+            // KHÔNG DÙNG TRANSACTION - Test trước
+            // Tạo course trực tiếp
+            $courseData = [
                 'code' => strtoupper($validated['code']),
                 'name' => $validated['name'],
                 'description' => $validated['description'] ?? null,
                 'credits' => $validated['credits'],
                 'type' => $validated['type'],
+                'is_active' => $validated['is_active'] ?? true,
                 'department_id' => $validated['department_id'] ?? null,
                 'max_students' => $validated['max_students'] ?? null,
                 'semester' => $validated['semester'] ?? null,
                 'year' => $validated['year'] ?? now()->year,
-                'is_active' => $validated['is_active'] ?? true,
                 'tuition' => $validated['tuition'] ?? null,
+            ];
+
+            Log::info('Creating course with data:', $courseData);
+
+            // TẠO COURSE
+            $course = Course::create($courseData);
+
+            if (!$course) {
+                Log::error('Course creation returned null!');
+                throw new \Exception('Không thể tạo học phần');
+            }
+
+            Log::info('✅ Course created successfully!', [
+                'course_id' => $course->id,
+                'course_code' => $course->code,
             ]);
 
-            Log::info('=== COURSE CREATED ===', ['course' => $course]);
+            // Kiểm tra course có trong DB không
+            $checkCourse = Course::find($course->id);
+            if (!$checkCourse) {
+                Log::error('❌ Course not found in DB after creation!');
+                throw new \Exception('Course không tồn tại trong database');
+            }
 
-            // Tạo class sessions nếu có
+            Log::info('✅ Course verified in database', [
+                'id' => $checkCourse->id,
+                'code' => $checkCourse->code,
+                'name' => $checkCourse->name,
+            ]);
+
+            // TẠO CLASS SESSIONS (nếu có)
             if (!empty($validated['class_sessions'])) {
+                Log::info('Creating class sessions...', [
+                    'count' => count($validated['class_sessions'])
+                ]);
+
                 foreach ($validated['class_sessions'] as $index => $cs) {
-                    // Bỏ qua session nếu không có thông tin quan trọng
+                    // Bỏ qua nếu không có thông tin
                     if (empty($cs['class_code']) && empty($cs['teacher_id'])) {
+                        Log::info("Skipping empty session {$index}");
                         continue;
                     }
 
-                    $session = ClassSession::create([
+                    $sessionData = [
                         'course_id' => $course->id,
                         'teacher_id' => $cs['teacher_id'] ?? null,
                         'class_code' => $cs['class_code'] ?? 'A',
                         'semester' => $course->semester,
                         'year' => $course->year,
-                        'max_students' => $cs['max_students'] ?? $course->max_students,
+                        'max_students' => $cs['max_students'] ?? $course->max_students ?? 30,
                         'enrolled_count' => 0,
                         'status' => 'active',
+                    ];
+
+                    Log::info("Creating session {$index}", $sessionData);
+
+                    $session = ClassSession::create($sessionData);
+
+                    Log::info("✅ Session {$index} created", [
+                        'session_id' => $session->id,
+                        'class_code' => $session->class_code,
                     ]);
 
-                    Log::info("=== SESSION {$index} CREATED ===", ['session' => $session]);
-
-                    // Tạo schedules nếu có
+                    // TẠO SCHEDULES (nếu có)
                     if (!empty($cs['schedules'])) {
-                        foreach ($cs['schedules'] as $sch) {
-                            Schedule::create([
+                        Log::info("Creating schedules for session {$session->id}...");
+
+                        foreach ($cs['schedules'] as $schIndex => $sch) {
+                            if (empty($sch['day_of_week'])) {
+                                continue;
+                            }
+
+                            $scheduleData = [
                                 'course_id' => $course->id,
                                 'class_session_id' => $session->id,
                                 'day_of_week' => $sch['day_of_week'],
-                                'start_time' => $sch['start_time'],
-                                'end_time' => $sch['end_time'],
+                                'start_time' => $sch['start_time'] ?? '08:00',
+                                'end_time' => $sch['end_time'] ?? '10:00',
                                 'room' => $sch['room'] ?? null,
+                            ];
+
+                            Log::info("Creating schedule {$schIndex}", $scheduleData);
+
+                            $schedule = Schedule::create($scheduleData);
+
+                            Log::info("✅ Schedule {$schIndex} created", [
+                                'schedule_id' => $schedule->id,
                             ]);
                         }
                     }
                 }
             } else {
-                // Tạo session mặc định nếu không có
-                ClassSession::create([
+                // Tạo 1 session mặc định
+                Log::info('No sessions provided, creating default session');
+
+                $defaultSession = ClassSession::create([
                     'course_id' => $course->id,
                     'teacher_id' => null,
                     'class_code' => 'A',
@@ -170,43 +218,52 @@ class CoursesController extends Controller
                     'enrolled_count' => 0,
                     'status' => 'active',
                 ]);
+
+                Log::info('✅ Default session created', [
+                    'session_id' => $defaultSession->id,
+                ]);
             }
 
-            DB::commit();
-
-            Log::info('=== COURSE CREATION SUCCESS ===', ['course_id' => $course->id]);
+            Log::info('========================================');
+            Log::info('✅ COURSE CREATION COMPLETED SUCCESSFULLY');
+            Log::info('Course ID: ' . $course->id);
+            Log::info('========================================');
 
             return redirect()
                 ->route('admin.courses.index')
-                ->with('success', "Học phần '{$course->name}' đã được tạo thành công!");
+                ->with('success', "✅ Học phần '{$course->name}' (ID: {$course->id}) đã được tạo thành công!");
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            DB::rollBack();
-            Log::error('=== VALIDATION ERROR ===', ['errors' => $e->errors()]);
-            
-            return back()
-                ->withInput()
-                ->withErrors($e->errors());
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('=== COURSE CREATION ERROR ===', [
-                'message' => $e->getMessage(),
-                'line' => $e->getLine(),
-                'file' => $e->getFile(),
+            Log::error('❌ VALIDATION ERROR', [
+                'errors' => $e->errors(),
             ]);
 
             return back()
                 ->withInput()
-                ->with('error', 'Lỗi: ' . $e->getMessage());
+                ->withErrors($e->errors())
+                ->with('error', 'Dữ liệu không hợp lệ!');
+
+        } catch (\Exception $e) {
+            Log::error('========================================');
+            Log::error('❌ COURSE CREATION FAILED');
+            Log::error('Error: ' . $e->getMessage());
+            Log::error('Line: ' . $e->getLine());
+            Log::error('File: ' . $e->getFile());
+            Log::error('Trace: ' . $e->getTraceAsString());
+            Log::error('========================================');
+
+            return back()
+                ->withInput()
+                ->with('error', 'Lỗi: ' . $e->getMessage() . ' (Line: ' . $e->getLine() . ')');
         }
     }
 
     public function edit(Course $course)
     {
         $departments = Department::orderBy('name')->get();
-        $teachers = User::role('teacher')->select('id','name')->orderBy('name')->get();
+        $teachers = User::role('teacher')->select('id','name')->get();
 
+        // load class sessions and schedules
         $course->load(['classSessions.schedules', 'department']);
 
         return Inertia::render('Admin/Courses/Edit', [
@@ -218,43 +275,36 @@ class CoursesController extends Controller
 
     public function update(Request $request, Course $course)
     {
-        Log::info('=== COURSE UPDATE START ===', [
-            'course_id' => $course->id,
-            'request_data' => $request->all(),
+        $validated = $request->validate([
+            'code' => "required|string|max:20|unique:courses,code,{$course->id}",
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'credits' => 'required|integer|min:1|max:10',
+            'type' => 'required|in:required,elective',
+            'is_active' => 'boolean',
+            'department_id' => 'nullable|exists:departments,id',
+            'max_students' => 'nullable|integer|min:1',
+            'semester' => 'nullable|string|in:Fall,Spring,Summer',
+            'year' => 'nullable|integer|min:2020|max:2100',
+            'tuition' => 'nullable|numeric|min:0',
+            'class_sessions' => 'nullable|array',
+            'class_sessions.*.id' => 'nullable|exists:class_sessions,id',
+            'class_sessions.*.class_code' => 'nullable|string',
+            'class_sessions.*.teacher_id' => 'nullable|exists:users,id',
+            'class_sessions.*.max_students' => 'nullable|integer|min:1',
+            'class_sessions.*.status' => 'nullable|string',
+            'class_sessions.*.schedules' => 'nullable|array',
+            'class_sessions.*.schedules.*.id' => 'nullable|exists:schedules,id',
+            'class_sessions.*.schedules.*.day_of_week' => 'required_with:class_sessions.*.schedules|string',
+            'class_sessions.*.schedules.*.start_time' => 'required_with:class_sessions.*.schedules|string',
+            'class_sessions.*.schedules.*.end_time' => 'required_with:class_sessions.*.schedules|string',
+            'class_sessions.*.schedules.*.room' => 'nullable|string',
         ]);
 
+        DB::beginTransaction();
         try {
-            $validated = $request->validate([
-                'code' => "required|string|max:20|unique:courses,code,{$course->id}",
-                'name' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'credits' => 'required|integer|min:1|max:10',
-                'type' => 'required|in:required,elective',
-                'is_active' => 'boolean',
-                'department_id' => 'nullable|exists:departments,id',
-                'max_students' => 'nullable|integer|min:1',
-                'semester' => 'nullable|string|in:Fall,Spring,Summer',
-                'year' => 'nullable|integer|min:2020|max:2100',
-                'tuition' => 'nullable|numeric|min:0',
-                
-                'class_sessions' => 'nullable|array',
-                'class_sessions.*.id' => 'nullable|exists:class_sessions,id',
-                'class_sessions.*.class_code' => 'nullable|string|max:10',
-                'class_sessions.*.teacher_id' => 'nullable|exists:users,id',
-                'class_sessions.*.max_students' => 'nullable|integer|min:1',
-                'class_sessions.*.schedules' => 'nullable|array',
-                'class_sessions.*.schedules.*.id' => 'nullable|exists:schedules,id',
-                'class_sessions.*.schedules.*.day_of_week' => 'required_with:class_sessions.*.schedules|string',
-                'class_sessions.*.schedules.*.start_time' => 'required_with:class_sessions.*.schedules|string',
-                'class_sessions.*.schedules.*.end_time' => 'required_with:class_sessions.*.schedules|string',
-                'class_sessions.*.schedules.*.room' => 'nullable|string|max:50',
-            ]);
-
-            DB::beginTransaction();
-
-            // Update course
             $course->update([
-                'code' => strtoupper($validated['code']),
+                'code' => $validated['code'],
                 'name' => $validated['name'],
                 'description' => $validated['description'] ?? null,
                 'credits' => $validated['credits'],
@@ -269,23 +319,21 @@ class CoursesController extends Controller
 
             $incomingSessionIds = [];
 
-            // Update/Create sessions
             if (!empty($validated['class_sessions'])) {
                 foreach ($validated['class_sessions'] as $cs) {
                     if (!empty($cs['id'])) {
-                        // Update existing session
                         $session = ClassSession::find($cs['id']);
-                        if ($session && $session->course_id == $course->id) {
+                        if ($session) {
                             $session->update([
                                 'class_code' => $cs['class_code'] ?? $session->class_code,
                                 'teacher_id' => $cs['teacher_id'] ?? $session->teacher_id,
                                 'max_students' => $cs['max_students'] ?? $session->max_students,
+                                'status' => $cs['status'] ?? $session->status,
                             ]);
                             $incomingSessionIds[] = $session->id;
 
-                            // Delete old schedules và tạo mới
+                            // replace schedules for simplicity
                             $session->schedules()->delete();
-                            
                             if (!empty($cs['schedules'])) {
                                 foreach ($cs['schedules'] as $sch) {
                                     Schedule::create([
@@ -300,23 +348,17 @@ class CoursesController extends Controller
                             }
                         }
                     } else {
-                        // Create new session
-                        if (empty($cs['class_code']) && empty($cs['teacher_id'])) {
-                            continue;
-                        }
-
                         $session = ClassSession::create([
                             'course_id' => $course->id,
                             'teacher_id' => $cs['teacher_id'] ?? null,
-                            'class_code' => $cs['class_code'] ?? 'A',
+                            'class_code' => $cs['class_code'] ?? null,
                             'semester' => $course->semester,
                             'year' => $course->year,
                             'max_students' => $cs['max_students'] ?? $course->max_students,
                             'enrolled_count' => 0,
-                            'status' => 'active',
+                            'status' => $cs['status'] ?? 'active',
                         ]);
                         $incomingSessionIds[] = $session->id;
-
                         if (!empty($cs['schedules'])) {
                             foreach ($cs['schedules'] as $sch) {
                                 Schedule::create([
@@ -333,34 +375,23 @@ class CoursesController extends Controller
                 }
             }
 
-            // Xóa sessions không còn trong danh sách (nếu không có enrollments)
+            // delete sessions that were removed (only if no enrollments)
             $toDelete = $course->classSessions()->whereNotIn('id', $incomingSessionIds)->get();
             foreach ($toDelete as $delSession) {
                 if ($delSession->enrollments()->exists()) {
-                    continue; // Giữ lại nếu có sinh viên
+                    // keep it if students are enrolled
+                    continue;
                 }
                 $delSession->schedules()->delete();
                 $delSession->delete();
             }
 
             DB::commit();
-
-            Log::info('=== COURSE UPDATE SUCCESS ===', ['course_id' => $course->id]);
-
-            return redirect()
-                ->route('admin.courses.index')
-                ->with('success', 'Học phần đã được cập nhật!');
-
-        } catch (\Exception $e) {
+            return redirect()->route('admin.courses.index')->with('success', 'Học phần đã được cập nhật!');
+        } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('=== COURSE UPDATE ERROR ===', [
-                'message' => $e->getMessage(),
-                'line' => $e->getLine(),
-            ]);
-
-            return back()
-                ->withInput()
-                ->with('error', 'Lỗi: ' . $e->getMessage());
+            Log::error('Error updating course: '.$e->getMessage());
+            return back()->withInput()->with('error', 'Lỗi khi cập nhật học phần: '.$e->getMessage());
         }
     }
 
@@ -370,7 +401,6 @@ class CoursesController extends Controller
             return back()->with('error', 'Không thể xóa học phần đang có sinh viên đăng ký!');
         }
 
-        // Xóa sessions và schedules
         foreach ($course->classSessions as $session) {
             $session->schedules()->delete();
             $session->delete();
@@ -378,9 +408,7 @@ class CoursesController extends Controller
 
         $course->delete();
 
-        return redirect()
-            ->route('admin.courses.index')
-            ->with('success', 'Học phần đã được xóa!');
+        return redirect()->route('admin.courses.index')->with('success', 'Học phần đã được xóa!');
     }
 
     public function toggleActive(Course $course)
@@ -401,14 +429,12 @@ class CoursesController extends Controller
             $newCourse->name = $course->name . ' (Copy)';
             $newCourse->push();
 
-            // Duplicate sessions
             foreach ($course->classSessions as $session) {
                 $newSession = $session->replicate();
                 $newSession->course_id = $newCourse->id;
                 $newSession->enrolled_count = 0;
                 $newSession->push();
 
-                // Duplicate schedules
                 foreach ($session->schedules as $sch) {
                     $newSch = $sch->replicate();
                     $newSch->course_id = $newCourse->id;
@@ -418,14 +444,10 @@ class CoursesController extends Controller
             }
 
             DB::commit();
-            
-            return redirect()
-                ->route('admin.courses.edit', $newCourse)
-                ->with('success', 'Đã sao chép học phần!');
-                
-        } catch (\Exception $e) {
+            return redirect()->route('admin.courses.edit', $newCourse)->with('success', 'Đã sao chép học phần!');
+        } catch (\Throwable $e) {
             DB::rollBack();
-            return back()->with('error', 'Lỗi: ' . $e->getMessage());
+            return back()->with('error', 'Lỗi khi sao chép: '.$e->getMessage());
         }
     }
 }

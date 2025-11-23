@@ -15,7 +15,6 @@ export default function CoursesCreate({ departments, teachers }) {
         semester: "",
         year: new Date().getFullYear(),
         tuition: "",
-        // class_sessions: array of { class_code, teacher_id, max_students, schedules: [{day_of_week, start_time, end_time, room}] }
         class_sessions: [
             {
                 class_code: "A",
@@ -48,7 +47,7 @@ export default function CoursesCreate({ departments, teachers }) {
 
     const updateSessionField = (idx, field, value) => {
         const s = [...data.class_sessions];
-        s[idx][field] = value;
+        s[idx] = { ...s[idx], [field]: value };
         setData("class_sessions", s);
     };
 
@@ -66,21 +65,33 @@ export default function CoursesCreate({ departments, teachers }) {
 
     const removeSchedule = (sessionIdx, schIdx) => {
         const s = [...data.class_sessions];
+        s[sessionIdx].schedules = [...(s[sessionIdx].schedules || [])];
         s[sessionIdx].schedules.splice(schIdx, 1);
         setData("class_sessions", s);
     };
 
     const updateScheduleField = (sessionIdx, schIdx, field, value) => {
         const s = [...data.class_sessions];
-        s[sessionIdx].schedules[schIdx][field] = value;
+        s[sessionIdx].schedules = [...(s[sessionIdx].schedules || [])];
+        s[sessionIdx].schedules[schIdx] = {
+            ...s[sessionIdx].schedules[schIdx],
+            [field]: value,
+        };
         setData("class_sessions", s);
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route("admin.courses.store"));
-    };
+        console.log("=== FORM DATA ===", data);
 
+        post(route("admin.courses.store"), {
+            onSuccess: () => alert("✅ Thành công!"),
+            onError: (errors) => {
+                console.error("❌ LỖI:", errors);
+                alert("Có lỗi! Xem Console");
+            },
+        });
+    };
     return (
         <AuthenticatedLayout
             header={
@@ -142,7 +153,7 @@ export default function CoursesCreate({ departments, teachers }) {
                                     onChange={(e) =>
                                         setData(
                                             "credits",
-                                            parseInt(e.target.value)
+                                            parseInt(e.target.value || 0)
                                         )
                                     }
                                     min="1"
@@ -191,11 +202,6 @@ export default function CoursesCreate({ departments, teachers }) {
                                 className="w-full border-gray-300 rounded-lg"
                                 placeholder="Mô tả..."
                             />
-                            {errors.description && (
-                                <p className="text-sm text-red-600 mt-1">
-                                    {errors.description}
-                                </p>
-                            )}
                         </div>
                     </div>
 
@@ -252,7 +258,7 @@ export default function CoursesCreate({ departments, teachers }) {
                                         setData("tuition", e.target.value)
                                     }
                                     className="w-full border-gray-300 rounded-lg"
-                                    placeholder="Nhập số (Ví dụ: 1500000)"
+                                    placeholder="Ví dụ: 1500000"
                                 />
                                 {errors.tuition && (
                                     <p className="text-sm text-red-600 mt-1">
@@ -335,7 +341,7 @@ export default function CoursesCreate({ departments, teachers }) {
                                                 <option value="">
                                                     -- Chọn giảng viên --
                                                 </option>
-                                                {teachers?.map((t) => (
+                                                {(teachers || []).map((t) => (
                                                     <option
                                                         key={t.id}
                                                         value={t.id}
@@ -370,7 +376,7 @@ export default function CoursesCreate({ departments, teachers }) {
                                                 Trạng thái
                                             </label>
                                             <div className="text-sm text-gray-500">
-                                                active
+                                                {s.status || "active"}
                                             </div>
                                         </div>
                                     </div>
@@ -511,7 +517,10 @@ export default function CoursesCreate({ departments, teachers }) {
                                 type="number"
                                 value={data.year}
                                 onChange={(e) =>
-                                    setData("year", parseInt(e.target.value))
+                                    setData(
+                                        "year",
+                                        parseInt(e.target.value || 0)
+                                    )
                                 }
                                 className="w-full border rounded"
                                 min="2020"

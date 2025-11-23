@@ -9,7 +9,7 @@ class Course extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = [
+ protected $fillable = [
         'code',
         'name',
         'description',
@@ -30,6 +30,7 @@ class Course extends Model
         'year' => 'integer',
         'tuition' => 'decimal:2',
     ];
+
 
     // Relationships
     public function department()

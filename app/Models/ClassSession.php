@@ -1,11 +1,13 @@
 <?php
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ClassSession extends Model
 {
-protected $table = 'class_sessions';
+    use HasFactory;
+
     protected $fillable = [
         'course_id',
         'teacher_id',
@@ -18,12 +20,10 @@ protected $table = 'class_sessions';
     ];
 
     protected $casts = [
-        'year' => 'integer',
         'max_students' => 'integer',
         'enrolled_count' => 'integer',
+        'year' => 'integer',
     ];
-
-    protected $with = ['course', 'teacher'];
 
     public function course()
     {
@@ -35,36 +35,13 @@ protected $table = 'class_sessions';
         return $this->belongsTo(User::class, 'teacher_id');
     }
 
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class, 'class_session_id');
+    }
+
     public function enrollments()
     {
         return $this->hasMany(Enrollment::class);
-    }
-
-    public function attendances()
-    {
-        return $this->hasMany(Attendance::class);
-    }
-
-    public function schedules()
-    {
-        return $this->hasMany(TeachingSchedule::class);
-    }
-
-    // Check if class is full
-    public function isFullAttribute()
-    {
-        return $this->enrolled_count >= $this->max_students;
-    }
-
-    // Update enrolled count
-    public function updateEnrolledCount()
-    {
-        $this->enrolled_count = $this->enrollments()->where('status', 'approved')->count();
-        $this->save();
-    }
-     public function classSessions()
-    {
-        // nếu model ClassSession namespace khác, điều chỉnh đường dẫn
-        return $this->hasMany(\App\Models\ClassSession::class, 'course_id', 'id');
     }
 }
