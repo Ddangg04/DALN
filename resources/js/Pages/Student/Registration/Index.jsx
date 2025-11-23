@@ -2,13 +2,6 @@ import { Head, Link, router, usePage } from "@inertiajs/react";
 import { useState } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
-/**
- * Student Registration Index Page (Inertia + React)
- * - Bảo vệ null checks (tránh crash khi relation bị null)
- * - Hiển thị lại course khi enrollment status = 'dropped' (backend phải filter đúng)
- * - Xử lý tìm kiếm / filter / pagination
- */
-
 export default function RegistrationIndex({
     availableCourses,
     myEnrollments,
@@ -39,13 +32,11 @@ export default function RegistrationIndex({
     const handleEnroll = (courseId) => {
         if (!confirm("Bạn có chắc chắn muốn đăng ký học phần này?")) return;
 
-        // Gọi API tạo enrollment
         router.post(
             route("student.registration.store"),
             { course_id: courseId },
             {
                 onError: (errors) => {
-                    // optional: bạn có thể xử lý error cụ thể ở đây
                     console.error(errors);
                 },
             }
@@ -57,13 +48,10 @@ export default function RegistrationIndex({
         if (!confirm("Bạn có chắc chắn muốn hủy đăng ký?")) return;
 
         router.delete(route("student.registration.destroy", enrollmentId), {
-            onError: (errors) => {
-                console.error(errors);
-            },
+            onError: (errors) => console.error(errors),
         });
     };
 
-    // Badge cho trạng thái enrollment
     const getStatusBadge = (status) => {
         const badges = {
             pending: {
@@ -80,7 +68,6 @@ export default function RegistrationIndex({
         return badges[status] || badges.pending;
     };
 
-    // Helper safe: trả về mảng courses nếu có, hoặc []
     const availableList = availableCourses?.data || [];
 
     return (
@@ -93,7 +80,6 @@ export default function RegistrationIndex({
         >
             <Head title="Đăng ký học phần" />
 
-            {/* Flash Messages */}
             {flash?.success && (
                 <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
                     {flash.success}
@@ -105,7 +91,6 @@ export default function RegistrationIndex({
                 </div>
             )}
 
-            {/* Tabs */}
             <div className="mb-6 border-b border-gray-200">
                 <nav className="-mb-px flex space-x-8">
                     <button
@@ -131,10 +116,8 @@ export default function RegistrationIndex({
                 </nav>
             </div>
 
-            {/* Available Courses Tab */}
             {activeTab === "available" && (
                 <>
-                    {/* Search & Filters */}
                     <div className="bg-white rounded-lg shadow mb-6 p-6">
                         <form onSubmit={handleSearch}>
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -178,7 +161,6 @@ export default function RegistrationIndex({
                         </form>
                     </div>
 
-                    {/* Courses Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {availableList.length === 0 ? (
                             <div className="col-span-full bg-white rounded-lg shadow p-8 text-center text-gray-500">
@@ -286,7 +268,6 @@ export default function RegistrationIndex({
                         )}
                     </div>
 
-                    {/* Pagination */}
                     {availableCourses?.links &&
                         Array.isArray(availableCourses.links) &&
                         availableCourses.links.length > 0 && (
@@ -315,7 +296,6 @@ export default function RegistrationIndex({
                 </>
             )}
 
-            {/* Enrolled Courses Tab */}
             {activeTab === "enrolled" && (
                 <div className="space-y-4">
                     {!myEnrollments || myEnrollments.length === 0 ? (
@@ -327,7 +307,6 @@ export default function RegistrationIndex({
                         </div>
                     ) : (
                         myEnrollments.map((enrollment) => {
-                            // Kiểm tra an toàn relation course
                             const course = enrollment?.course || null;
                             const badge = getStatusBadge(enrollment.status);
 
@@ -396,7 +375,6 @@ export default function RegistrationIndex({
                                             </div>
 
                                             <div className="ml-4">
-                                                {/* Chỉ hiển thị nút hủy khi course tồn tại và trạng thái phù hợp */}
                                                 {(enrollment.status ===
                                                     "pending" ||
                                                     enrollment.status ===
@@ -414,7 +392,6 @@ export default function RegistrationIndex({
                                                         </button>
                                                     )}
 
-                                                {/* Nếu course đã bị xóa, show note */}
                                                 {!course && (
                                                     <div className="text-sm text-gray-500">
                                                         Khoá học không còn tồn

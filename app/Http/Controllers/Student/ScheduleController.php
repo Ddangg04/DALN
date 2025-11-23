@@ -7,16 +7,18 @@ use Inertia\Inertia;
 use App\Models\Schedule;
 use App\Models\Enrollment;
 use Illuminate\Support\Facades\Auth;
+
 class ScheduleController extends Controller
 {
     public function index()
     {
         $student = Auth::user();
 
-        // Get all schedules for enrolled courses
+        // Lấy tất cả schedule của các course mà sinh viên có enrollment pending OR approved
+        // (trước đó chỉ lấy approved nên đăng ký mới chưa hiện)
         $schedules = Schedule::whereHas('course.enrollments', function($q) use ($student) {
                             $q->where('student_id', $student->id)
-                              ->where('status', 'approved');
+                              ->whereIn('status', ['pending', 'approved']);
                         })
                         ->with(['course.department', 'instructor'])
                         ->get()

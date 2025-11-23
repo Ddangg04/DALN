@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
@@ -13,11 +14,12 @@ class GradesController extends Controller
     {
         $student = Auth::user();
 
+        // Lấy cả enrollment có status pending hoặc approved (vì student mới đăng ký đang là pending)
         $query = Enrollment::forStudent($student->id)
-                          ->approved()
+                          ->whereIn('status', ['pending', 'approved'])
                           ->with(['course.department', 'grades']);
 
-        // Filter by semester
+        // Filter by semester (filter trên course)
         if ($request->filled('semester')) {
             $query->whereHas('course', function($q) use ($request) {
                 $q->where('semester', $request->semester);

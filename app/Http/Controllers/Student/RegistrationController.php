@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
@@ -13,108 +14,108 @@ use App\Models\Notification;
 class RegistrationController extends Controller
 {
     public function index(Request $request)
-{
-    $student = Auth::user();
+    {
+        $student = Auth::user();
 
-    // Available courses (not enrolled yet with active enrollment)
-    $query = Course::active()
-        ->whereDoesntHave('enrollments', function ($q) use ($student) {
-            $q->where('student_id', $student->id)
-              ->whereIn('status', ['pending', 'approved']); // <-- CHỈ loại trừ enrollments "active"
-        });
+        // Hiển thị học phần chưa đăng ký hoặc đã hủy
+        $query = Course::active()
+            ->whereDoesntHave('enrollments', function ($q) use ($student) {
+                $q->where('student_id', $student->id)
+                  ->whereIn('status', ['pending', 'approved']); // chỉ loại nếu đang đăng ký
+            });
 
-    // Filters
-    if ($request->filled('department_id')) {
-        $query->where('department_id', $request->department_id);
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('search')) {
+            $query->search($request->search);
+        }
+
+        $availableCourses = $query->with(['department', 'schedules'])
+                                 ->paginate(12)
+                                 ->withQueryString();
+
+        $departments = Department::orderBy('name')->get();
+
+        $myEnrollments = Enrollment::forStudent($student->id)
+            ->with(['course.department', 'course.schedules'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        return Inertia::render('Student/Registration/Index', [
+            'availableCourses' => $availableCourses,
+            'myEnrollments'    => $myEnrollments,
+            'departments'      => $departments,
+            'filters'          => $request->only(['department_id', 'type', 'search']),
+        ]);
     }
-
-    if ($request->filled('type')) {
-        $query->where('type', $request->type);
-    }
-
-    if ($request->filled('search')) {
-        $query->search($request->search);
-    }
-
-    $availableCourses = $query->with(['department', 'schedules'])
-                              ->paginate(12)
-                              ->withQueryString();
-
-    $departments = Department::orderBy('name')->get();
-
-    // My enrollments (load course relation)
-    $myEnrollments = Enrollment::forStudent($student->id)
-                              ->with(['course.department', 'course.schedules'])
-                              ->orderByDesc('created_at')
-                              ->get();
-
-    return Inertia::render('Student/Registration/Index', [
-        'availableCourses' => $availableCourses,
-        'myEnrollments' => $myEnrollments,
-        'departments' => $departments,
-        'filters' => $request->only(['department_id', 'type', 'search']),
-    ]);
-}
 
     public function store(Request $request)
     {
-         $student = Auth::user();
-        
+        $student = Auth::user();
+
         $validated = $request->validate([
             'course_id' => 'required|exists:courses,id',
         ]);
 
-        // Check if already enrolled
+        // Kiểm tra trùng nhưng CHỈ trùng nếu pending/approved
         $existing = Enrollment::where('student_id', $student->id)
-                             ->where('course_id', $validated['course_id'])
-                             ->first();
+            ->where('course_id', $validated['course_id'])
+            ->whereIn('status', ['pending', 'approved'])
+            ->first();
 
         if ($existing) {
             return back()->with('error', 'Bạn đã đăng ký học phần này rồi!');
         }
 
-        // Check course capacity
-        $course = Course::find($validated['course_id']);
+        $course = Course::findOrFail($validated['course_id']);
+
+        // Kiểm tra sĩ số (chỉ tính approved)
         $currentEnrollments = Enrollment::where('course_id', $course->id)
-                                       ->where('status', 'approved')
-                                       ->count();
+            ->where('status', 'approved')
+            ->count();
 
         if ($course->max_students && $currentEnrollments >= $course->max_students) {
             return back()->with('error', 'Học phần đã đầy!');
         }
 
-        // Create enrollment
         Enrollment::create([
             'student_id' => $student->id,
-            'course_id' => $validated['course_id'],
-            'status' => 'pending',
+            'course_id'  => $validated['course_id'],
+            'status'     => 'pending',
         ]);
 
-        // Create notification
         Notification::create([
             'user_id' => $student->id,
-            'type' => 'enrollment',
-            'title' => 'Đăng ký học phần',
+            'type'    => 'enrollment',
+            'title'   => 'Đăng ký học phần',
             'message' => "Bạn đã đăng ký học phần {$course->name} thành công. Vui lòng chờ phê duyệt.",
+            'content' => "Bạn đã đăng ký học phần {$course->name} thành công.",
         ]);
 
         return back()->with('success', 'Đăng ký học phần thành công!');
     }
 
     public function destroy(Enrollment $enrollment)
-{
-    $student = Auth::user();
+    {
+        $student = Auth::user();
 
-    if ($enrollment->student_id !== $student->id) {
-        abort(403);
+        if ($enrollment->student_id !== $student->id) {
+            abort(403);
+        }
+
+        if (!in_array($enrollment->status, ['pending', 'approved'])) {
+            return back()->with('error', 'Không thể hủy đăng ký học phần này!');
+        }
+
+        // XÓA hoàn toàn → trở về trạng thái như chưa đăng ký
+        $enrollment->delete();
+
+        return back()->with('success', 'Đã hủy đăng ký học phần!');
     }
-
-    if (!in_array($enrollment->status, ['pending', 'approved'])) {
-        return back()->with('error', 'Không thể hủy đăng ký học phần này!');
-    }
-
-    $enrollment->update(['status' => 'dropped']);
-
-    return back()->with('success', 'Đã hủy đăng ký học phần!');
-}
 }
