@@ -1,12 +1,9 @@
 <?php
-
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Department;
 
 class Course extends Model
 {
@@ -23,6 +20,7 @@ class Course extends Model
         'max_students',
         'semester',
         'year',
+        'tuition',
     ];
 
     protected $casts = [
@@ -30,35 +28,51 @@ class Course extends Model
         'credits' => 'integer',
         'max_students' => 'integer',
         'year' => 'integer',
+        'tuition' => 'decimal:2',
     ];
 
-    protected $with = ['department'];
-
-    // Relationship với Department
+    // Relationships
     public function department()
     {
         return $this->belongsTo(Department::class);
     }
 
-    // Scope để lấy courses active
+    public function classSessions()
+    {
+        return $this->hasMany(ClassSession::class, 'course_id');
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class);
+    }
+
+    public function enrollments()
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
+    public function materials()
+    {
+        return $this->hasMany(Material::class);
+    }
+
+    // Scopes
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
 
-    // Scope để lấy courses required
     public function scopeRequired($query)
     {
         return $query->where('type', 'required');
     }
 
-    // Scope để lấy courses elective
     public function scopeElective($query)
     {
         return $query->where('type', 'elective');
     }
 
-    // Scope search
     public function scopeSearch($query, $search)
     {
         return $query->where(function($q) use ($search) {
@@ -68,42 +82,26 @@ class Course extends Model
         });
     }
 
-    // Accessor để format course code
+    // Accessors
     public function getFullCodeAttribute()
     {
         return strtoupper($this->code);
     }
-    public function enrollments()
-{
-    return $this->hasMany(Enrollment::class);
-}
 
-public function schedules()
-{
-    return $this->hasMany(Schedule::class);
-}
-
-public function materials()
-{
-    return $this->hasMany(Material::class);
-}
-
-// Get enrolled students count
-public function getEnrolledStudentsCountAttribute()
-{
-    return $this->enrollments()->where('status', 'approved')->count();
-}
-
-// Check if course is full
-public function isFullAttribute()
-{
-    if (!$this->max_students) return false;
-    return $this->enrolled_students_count >= $this->max_students;
-}
-public function classSessions()
+    public function getEnrolledStudentsCountAttribute()
     {
-        // assuming model is App\Models\ClassSession and FK is course_id
-        return $this->hasMany(\App\Models\ClassSession::class, 'course_id', 'id');
+        return $this->enrollments()->where('status', 'approved')->count();
+    }
+
+    public function getIsFullAttribute()
+    {
+        if (!$this->max_students) return false;
+        return $this->enrolled_students_count >= $this->max_students;
+    }
+
+    public function getFormattedTuitionAttribute()
+    {
+        if (!$this->tuition) return 'Chưa có';
+        return number_format($this->tuition, 0, ',', '.') . ' VNĐ';
     }
 }
-

@@ -85,4 +85,9 @@ class Enrollment extends Model
     {
         return $query->where('student_id', $studentId);
     }
+     public function classSession()
+    {
+
+        return $this->belongsTo(ClassSession::class, 'class_session_id');
+    }
 }

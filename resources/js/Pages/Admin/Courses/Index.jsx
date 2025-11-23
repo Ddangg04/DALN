@@ -55,7 +55,6 @@ export default function CoursesIndex({ courses, departments, filters }) {
     };
 
     const rows = Array.isArray(courses?.data) ? courses.data : [];
-
     const hasFilters = search || departmentId || type || isActive;
 
     return (
@@ -207,236 +206,282 @@ export default function CoursesIndex({ courses, departments, filters }) {
                 </div>
             </div>
 
-            {/* Courses Table */}
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Học phần
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Mã HP
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Khoa
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Tín chỉ
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Loại
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Trạng thái
-                                </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Thao tác
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {rows.length === 0 ? (
-                                <tr>
-                                    <td
-                                        colSpan="7"
-                                        className="py-12 text-center text-gray-500"
-                                    >
-                                        <div className="text-4xl mb-2">📚</div>
-                                        <div className="text-lg">
-                                            Chưa có học phần
-                                        </div>
-                                        {hasFilters && (
-                                            <button
-                                                onClick={handleReset}
-                                                className="mt-2 text-blue-600 hover:text-blue-700 text-sm"
-                                            >
-                                                Xóa bộ lọc để xem tất cả
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
-                            ) : (
-                                rows.map((course) => (
-                                    <tr
-                                        key={course.id}
-                                        className="hover:bg-gray-50"
-                                    >
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm font-medium text-gray-900">
+            {/* Courses List (cards for more details) */}
+            <div className="grid grid-cols-1 gap-6">
+                {rows.length === 0 ? (
+                    <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+                        <div className="text-4xl mb-2">📚</div>
+                        <div className="text-lg">Chưa có học phần</div>
+                        {hasFilters && (
+                            <button
+                                onClick={handleReset}
+                                className="mt-2 text-blue-600 hover:text-blue-700 text-sm"
+                            >
+                                Xóa bộ lọc để xem tất cả
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    rows.map((course) => (
+                        <div
+                            key={course.id}
+                            className="bg-white rounded-lg shadow p-6"
+                        >
+                            <div className="flex items-start justify-between">
+                                <div className="flex-1 pr-6">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <div className="text-xl font-semibold text-gray-900">
                                                 {course.name}
                                             </div>
-                                            {course.description && (
-                                                <div className="text-sm text-gray-500 line-clamp-1">
-                                                    {course.description}
-                                                </div>
-                                            )}
-                                            {course.semester && course.year && (
-                                                <div className="text-xs text-gray-400 mt-1">
-                                                    {course.semester}{" "}
-                                                    {course.year}
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-900 font-mono font-semibold">
-                                                {course.code}
+                                            <div className="text-sm text-gray-500 mt-1">
+                                                {course.code} •{" "}
+                                                {course.credits ?? "-"} tín chỉ
                                             </div>
-                                            {course.max_students && (
-                                                <div className="text-xs text-gray-500">
-                                                    Max: {course.max_students}{" "}
-                                                    SV
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-900">
-                                                {course.department?.name ?? (
-                                                    <span className="text-gray-400">
-                                                        —
-                                                    </span>
-                                                )}
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-sm text-gray-500">
+                                                Học phí
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-900 font-semibold">
-                                                {course.credits ?? "-"}
+                                            <div className="text-lg font-bold text-blue-600">
+                                                {course.tuition
+                                                    ? new Intl.NumberFormat(
+                                                          "vi-VN"
+                                                      ).format(course.tuition) +
+                                                      " ₫"
+                                                    : "—"}
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span
-                                                className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                    course.type === "required"
-                                                        ? "bg-red-100 text-red-800"
-                                                        : "bg-blue-100 text-blue-800"
-                                                }`}
-                                            >
-                                                {course.type === "required"
-                                                    ? "Bắt buộc"
-                                                    : "Tự chọn"}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <button
-                                                onClick={() =>
-                                                    toggleActive(course.id)
-                                                }
-                                                className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full cursor-pointer transition-colors ${
-                                                    course.is_active
-                                                        ? "bg-green-100 text-green-800 hover:bg-green-200"
-                                                        : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                                                }`}
-                                            >
-                                                {course.is_active
-                                                    ? "Hoạt động"
-                                                    : "Ngừng"}
-                                            </button>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div className="flex justify-end space-x-2">
-                                                <Link
-                                                    href={route(
-                                                        "admin.courses.edit",
-                                                        course.id
-                                                    )}
-                                                    className="text-blue-600 hover:text-blue-900"
-                                                >
-                                                    Sửa
-                                                </Link>
-                                                <button
-                                                    onClick={() =>
-                                                        handleDelete(
-                                                            course.id,
-                                                            course.name
-                                                        )
-                                                    }
-                                                    className="text-red-600 hover:text-red-900"
-                                                >
-                                                    Xóa
-                                                </button>
+                                            <div className="text-xs text-gray-400 mt-1">
+                                                {course.semester
+                                                    ? `${course.semester} ${
+                                                          course.year || ""
+                                                      }`
+                                                    : ""}
                                             </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                        </div>
+                                    </div>
 
-                {/* Pagination */}
-                {courses?.links && courses.links.length > 3 && (
-                    <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                        <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                            <div>
-                                <p className="text-sm text-gray-700">
-                                    Hiển thị{" "}
-                                    <span className="font-medium">
-                                        {courses.from}
-                                    </span>{" "}
-                                    đến{" "}
-                                    <span className="font-medium">
-                                        {courses.to}
-                                    </span>{" "}
-                                    trong tổng số{" "}
-                                    <span className="font-medium">
-                                        {courses.total}
-                                    </span>{" "}
-                                    kết quả
-                                </p>
-                            </div>
-                            <div>
-                                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                                    {courses.links.map((link, index) => (
+                                    {course.description && (
+                                        <p className="mt-4 text-sm text-gray-600">
+                                            {course.description}
+                                        </p>
+                                    )}
+
+                                    {/* Class sessions summary */}
+                                    <div className="mt-4">
+                                        <div className="text-sm font-medium text-gray-700 mb-2">
+                                            Lớp (Class sessions)
+                                        </div>
+                                        <div className="space-y-3">
+                                            {Array.isArray(
+                                                course.class_sessions ||
+                                                    course.classSessions
+                                            ) &&
+                                            (
+                                                course.class_sessions ||
+                                                course.classSessions
+                                            ).length > 0 ? (
+                                                (
+                                                    course.class_sessions ||
+                                                    course.classSessions
+                                                ).map((s) => {
+                                                    const session = s;
+                                                    return (
+                                                        <div
+                                                            key={session.id}
+                                                            className="p-3 border rounded flex items-start justify-between"
+                                                        >
+                                                            <div>
+                                                                <div className="flex items-center space-x-3">
+                                                                    <div className="text-sm font-semibold">
+                                                                        {session.class_code ||
+                                                                            "—"}
+                                                                    </div>
+                                                                    <div className="text-xs text-gray-500">
+                                                                        GV:{" "}
+                                                                        {session
+                                                                            .teacher
+                                                                            ?.name ??
+                                                                            "Chưa phân công"}
+                                                                    </div>
+                                                                    <div className="text-xs text-gray-500">
+                                                                        Sĩ số:{" "}
+                                                                        {session.enrolled_count ??
+                                                                            session.active_enrollments_count ??
+                                                                            0}
+                                                                        /
+                                                                        {session.max_students ??
+                                                                            course.max_students ??
+                                                                            "—"}
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* schedules in this session */}
+                                                                {Array.isArray(
+                                                                    session.schedules
+                                                                ) &&
+                                                                    session
+                                                                        .schedules
+                                                                        .length >
+                                                                        0 && (
+                                                                        <div className="mt-2 text-sm text-gray-600">
+                                                                            {session.schedules.map(
+                                                                                (
+                                                                                    sch
+                                                                                ) => (
+                                                                                    <div
+                                                                                        key={
+                                                                                            sch.id ??
+                                                                                            `${session.id}-${sch.day_of_week}-${sch.start_time}`
+                                                                                        }
+                                                                                        className="flex items-center space-x-3"
+                                                                                    >
+                                                                                        <div className="text-xs text-gray-500 w-28">
+                                                                                            {
+                                                                                                sch.day_of_week
+                                                                                            }
+                                                                                        </div>
+                                                                                        <div className="text-xs">
+                                                                                            {(
+                                                                                                sch.start_time ||
+                                                                                                ""
+                                                                                            ).substring(
+                                                                                                0,
+                                                                                                5
+                                                                                            )}{" "}
+                                                                                            -{" "}
+                                                                                            {(
+                                                                                                sch.end_time ||
+                                                                                                ""
+                                                                                            ).substring(
+                                                                                                0,
+                                                                                                5
+                                                                                            )}
+                                                                                        </div>
+                                                                                        <div className="text-xs text-gray-400 ml-2">
+                                                                                            {sch.room ??
+                                                                                                ""}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                )
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                            </div>
+
+                                                            <div className="text-right">
+                                                                <div className="text-xs text-gray-400">
+                                                                    Trạng thái
+                                                                    lớp
+                                                                </div>
+                                                                <div className="text-sm font-medium">
+                                                                    {session.status ===
+                                                                    "active"
+                                                                        ? "Hoạt động"
+                                                                        : session.status ??
+                                                                          "—"}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })
+                                            ) : (
+                                                <div className="text-sm text-gray-500">
+                                                    Chưa có lớp (class session)
+                                                    cho học phần này.
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="w-48 flex flex-col items-end space-y-3">
+                                    <button
+                                        onClick={() => toggleActive(course.id)}
+                                        className={`px-3 py-2 rounded text-sm font-semibold ${
+                                            course.is_active
+                                                ? "bg-green-50 text-green-700"
+                                                : "bg-gray-100 text-gray-700"
+                                        }`}
+                                    >
+                                        {course.is_active
+                                            ? "Hoạt động"
+                                            : "Ngừng"}
+                                    </button>
+
+                                    <div className="text-right">
                                         <Link
-                                            key={index}
-                                            href={link.url || "#"}
-                                            preserveState
-                                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                                                link.active
-                                                    ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                                                    : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                                            } ${
-                                                index === 0
-                                                    ? "rounded-l-md"
-                                                    : ""
-                                            } ${
-                                                index ===
-                                                courses.links.length - 1
-                                                    ? "rounded-r-md"
-                                                    : ""
-                                            } ${
-                                                !link.url
-                                                    ? "cursor-not-allowed opacity-50"
-                                                    : ""
-                                            }`}
-                                            dangerouslySetInnerHTML={{
-                                                __html: link.label,
-                                            }}
-                                        />
-                                    ))}
-                                </nav>
+                                            href={route(
+                                                "admin.courses.edit",
+                                                course.id
+                                            )}
+                                            className="text-blue-600 hover:text-blue-900 block mb-2"
+                                        >
+                                            Sửa
+                                        </Link>
+                                        <button
+                                            onClick={() =>
+                                                handleDelete(
+                                                    course.id,
+                                                    course.name
+                                                )
+                                            }
+                                            className="text-red-600 hover:text-red-900"
+                                        >
+                                            Xóa
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                    ))
+                )}
+            </div>
 
-                        {/* Mobile pagination */}
-                        <div className="flex-1 flex justify-between sm:hidden">
-                            {courses.prev_page_url && (
-                                <Link
-                                    href={courses.prev_page_url}
-                                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                                >
-                                    Trước
-                                </Link>
-                            )}
-                            {courses.next_page_url && (
-                                <Link
-                                    href={courses.next_page_url}
-                                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                                >
-                                    Sau
-                                </Link>
-                            )}
+            {/* Pagination bottom */}
+            <div className="mt-6">
+                {courses?.links && courses.links.length > 3 && (
+                    <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 rounded-md shadow">
+                        <div>
+                            <p className="text-sm text-gray-700">
+                                Hiển thị{" "}
+                                <span className="font-medium">
+                                    {courses.from}
+                                </span>{" "}
+                                đến{" "}
+                                <span className="font-medium">
+                                    {courses.to}
+                                </span>{" "}
+                                trong tổng số{" "}
+                                <span className="font-medium">
+                                    {courses.total}
+                                </span>{" "}
+                                kết quả
+                            </p>
+                        </div>
+                        <div>
+                            <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                                {courses.links.map((link, index) => (
+                                    <Link
+                                        key={index}
+                                        href={link.url || "#"}
+                                        preserveState
+                                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                                            link.active
+                                                ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                                                : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                                        } ${
+                                            !link.url
+                                                ? "cursor-not-allowed opacity-50"
+                                                : ""
+                                        }`}
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
+                                    />
+                                ))}
+                            </nav>
                         </div>
                     </div>
                 )}

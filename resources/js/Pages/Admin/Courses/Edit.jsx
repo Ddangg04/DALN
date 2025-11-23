@@ -1,8 +1,10 @@
 import { Head, Link, useForm, router } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { useState } from "react";
 
-export default function CoursesEdit({ course, departments }) {
+export default function CoursesEdit({ course, departments, teachers }) {
     const { data, setData, put, processing, errors } = useForm({
+        id: course.id,
         code: course.code || "",
         name: course.name || "",
         description: course.description || "",
@@ -13,7 +15,70 @@ export default function CoursesEdit({ course, departments }) {
         max_students: course.max_students || "",
         semester: course.semester || "",
         year: course.year || new Date().getFullYear(),
+        tuition: course.tuition || "",
+        class_sessions: (
+            course.class_sessions ||
+            course.classSessions ||
+            []
+        ).map((s) => ({
+            id: s.id,
+            class_code: s.class_code,
+            teacher_id: s.teacher_id,
+            max_students: s.max_students,
+            schedules: (s.schedules || []).map((sc) => ({
+                id: sc.id,
+                day_of_week: sc.day_of_week,
+                start_time: sc.start_time
+                    ? sc.start_time.substring(0, 5)
+                    : "08:00",
+                end_time: sc.end_time ? sc.end_time.substring(0, 5) : "10:00",
+                room: sc.room || "",
+            })),
+        })),
     });
+
+    const addSession = () => {
+        setData("class_sessions", [
+            ...data.class_sessions,
+            { class_code: "", teacher_id: "", max_students: "", schedules: [] },
+        ]);
+    };
+
+    const removeSession = (idx) => {
+        const s = [...data.class_sessions];
+        s.splice(idx, 1);
+        setData("class_sessions", s);
+    };
+
+    const updateSessionField = (idx, field, value) => {
+        const s = [...data.class_sessions];
+        s[idx][field] = value;
+        setData("class_sessions", s);
+    };
+
+    const addSchedule = (sessionIdx) => {
+        const s = [...data.class_sessions];
+        s[sessionIdx].schedules = s[sessionIdx].schedules || [];
+        s[sessionIdx].schedules.push({
+            day_of_week: "Monday",
+            start_time: "08:00",
+            end_time: "10:00",
+            room: "",
+        });
+        setData("class_sessions", s);
+    };
+
+    const removeSchedule = (sessionIdx, schIdx) => {
+        const s = [...data.class_sessions];
+        s[sessionIdx].schedules.splice(schIdx, 1);
+        setData("class_sessions", s);
+    };
+
+    const updateScheduleField = (sessionIdx, schIdx, field, value) => {
+        const s = [...data.class_sessions];
+        s[sessionIdx].schedules[schIdx][field] = value;
+        setData("class_sessions", s);
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -30,9 +95,7 @@ export default function CoursesEdit({ course, departments }) {
         router.post(
             route("admin.courses.toggle-active", course.id),
             {},
-            {
-                preserveScroll: true,
-            }
+            { preserveScroll: true }
         );
     };
 
@@ -40,25 +103,23 @@ export default function CoursesEdit({ course, departments }) {
         <AuthenticatedLayout
             header={
                 <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-gray-800">
-                        Chỉnh sửa Học phần
-                    </h2>
+                    <h2 className="text-2xl font-bold">Chỉnh sửa Học phần</h2>
                     <div className="flex space-x-2">
                         <button
                             onClick={handleToggleActive}
-                            className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors"
+                            className="bg-yellow-500 text-white px-4 py-2 rounded"
                         >
                             {course.is_active ? "⏸️ Tạm ngừng" : "▶️ Kích hoạt"}
                         </button>
                         <button
                             onClick={handleDuplicate}
-                            className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition-colors"
+                            className="bg-purple-500 text-white px-4 py-2 rounded"
                         >
                             📋 Sao chép
                         </button>
                         <Link
                             href={route("admin.courses.index")}
-                            className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+                            className="bg-gray-500 text-white px-4 py-2 rounded"
                         >
                             ← Quay lại
                         </Link>
@@ -70,18 +131,15 @@ export default function CoursesEdit({ course, departments }) {
 
             <div className="bg-white rounded-lg shadow">
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                    {/* Basic Info Section */}
+                    {/* basic */}
                     <div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">
+                        <h3 className="text-lg font-semibold">
                             📚 Thông tin cơ bản
                         </h3>
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Code */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Mã học phần{" "}
-                                    <span className="text-red-500">*</span>
+                                <label className="block text-sm mb-1">
+                                    Mã học phần
                                 </label>
                                 <input
                                     type="text"
@@ -92,21 +150,17 @@ export default function CoursesEdit({ course, departments }) {
                                             e.target.value.toUpperCase()
                                         )
                                     }
-                                    className="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 font-mono"
-                                    placeholder="VD: CS101"
+                                    className="w-full border rounded"
                                 />
                                 {errors.code && (
-                                    <p className="mt-1 text-sm text-red-600">
+                                    <p className="text-sm text-red-600 mt-1">
                                         {errors.code}
                                     </p>
                                 )}
                             </div>
-
-                            {/* Credits */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Số tín chỉ{" "}
-                                    <span className="text-red-500">*</span>
+                                <label className="block text-sm mb-1">
+                                    Số tín chỉ
                                 </label>
                                 <input
                                     type="number"
@@ -117,279 +171,311 @@ export default function CoursesEdit({ course, departments }) {
                                             parseInt(e.target.value)
                                         )
                                     }
-                                    min="1"
-                                    max="10"
-                                    className="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full border rounded"
                                 />
-                                {errors.credits && (
-                                    <p className="mt-1 text-sm text-red-600">
-                                        {errors.credits}
-                                    </p>
-                                )}
                             </div>
                         </div>
 
-                        {/* Name */}
-                        <div className="mt-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Tên học phần{" "}
-                                <span className="text-red-500">*</span>
-                            </label>
+                        <div className="mt-4">
+                            <label className="block text-sm mb-1">Tên</label>
                             <input
                                 type="text"
                                 value={data.name}
                                 onChange={(e) =>
                                     setData("name", e.target.value)
                                 }
-                                className="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="VD: Lập trình hướng đối tượng"
+                                className="w-full border rounded"
                             />
-                            {errors.name && (
-                                <p className="mt-1 text-sm text-red-600">
-                                    {errors.name}
-                                </p>
-                            )}
                         </div>
 
-                        {/* Description */}
-                        <div className="mt-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Mô tả
-                            </label>
+                        <div className="mt-4">
+                            <label className="block text-sm mb-1">Mô tả</label>
                             <textarea
                                 value={data.description}
                                 onChange={(e) =>
                                     setData("description", e.target.value)
                                 }
                                 rows={4}
-                                className="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Nhập mô tả về học phần..."
+                                className="w-full border rounded"
                             />
-                            {errors.description && (
-                                <p className="mt-1 text-sm text-red-600">
-                                    {errors.description}
-                                </p>
-                            )}
                         </div>
                     </div>
 
-                    {/* Classification Section */}
+                    {/* classification & tuition */}
                     <div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">
-                            🏷️ Phân loại
+                        <h3 className="text-lg font-semibold">
+                            🏷️ Phân loại & Học phí
                         </h3>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Department */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Khoa
-                                </label>
-                                <select
-                                    value={data.department_id}
-                                    onChange={(e) =>
-                                        setData("department_id", e.target.value)
-                                    }
-                                    className="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option value="">-- Chọn khoa --</option>
-                                    {departments?.map((dept) => (
-                                        <option key={dept.id} value={dept.id}>
-                                            {dept.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.department_id && (
-                                    <p className="mt-1 text-sm text-red-600">
-                                        {errors.department_id}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Type */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Loại học phần{" "}
-                                    <span className="text-red-500">*</span>
-                                </label>
-                                <select
-                                    value={data.type}
-                                    onChange={(e) =>
-                                        setData("type", e.target.value)
-                                    }
-                                    className="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option value="elective">Tự chọn</option>
-                                    <option value="required">Bắt buộc</option>
-                                </select>
-                                {errors.type && (
-                                    <p className="mt-1 text-sm text-red-600">
-                                        {errors.type}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Schedule & Capacity Section */}
-                    <div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">
-                            📅 Lịch học & Sức chứa
-                        </h3>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {/* Semester */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Học kỳ
-                                </label>
-                                <select
-                                    value={data.semester}
-                                    onChange={(e) =>
-                                        setData("semester", e.target.value)
-                                    }
-                                    className="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option value="">-- Chọn học kỳ --</option>
-                                    <option value="Fall">Fall (Mùa thu)</option>
-                                    <option value="Spring">
-                                        Spring (Mùa xuân)
-                                    </option>
-                                    <option value="Summer">
-                                        Summer (Mùa hè)
-                                    </option>
-                                </select>
-                                {errors.semester && (
-                                    <p className="mt-1 text-sm text-red-600">
-                                        {errors.semester}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Year */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Năm học
-                                </label>
-                                <input
-                                    type="number"
-                                    value={data.year}
-                                    onChange={(e) =>
-                                        setData(
-                                            "year",
-                                            parseInt(e.target.value)
-                                        )
-                                    }
-                                    min="2020"
-                                    max="2100"
-                                    className="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                />
-                                {errors.year && (
-                                    <p className="mt-1 text-sm text-red-600">
-                                        {errors.year}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Max Students */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Số SV tối đa
-                                </label>
-                                <input
-                                    type="number"
-                                    value={data.max_students}
-                                    onChange={(e) =>
-                                        setData("max_students", e.target.value)
-                                    }
-                                    min="1"
-                                    className="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                    placeholder="VD: 50"
-                                />
-                                {errors.max_students && (
-                                    <p className="mt-1 text-sm text-red-600">
-                                        {errors.max_students}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Status */}
-                    <div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">
-                            ⚙️ Trạng thái
-                        </h3>
-
-                        <div className="flex items-center">
-                            <input
-                                type="checkbox"
-                                id="is_active"
-                                checked={data.is_active}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <select
+                                value={data.department_id}
                                 onChange={(e) =>
-                                    setData("is_active", e.target.checked)
+                                    setData("department_id", e.target.value)
                                 }
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                            />
-                            <label
-                                htmlFor="is_active"
-                                className="ml-2 block text-sm text-gray-700"
+                                className="border rounded p-2"
                             >
-                                Kích hoạt học phần (sinh viên có thể đăng ký)
-                            </label>
+                                <option value="">-- Khoa --</option>
+                                {departments?.map((d) => (
+                                    <option key={d.id} value={d.id}>
+                                        {d.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <select
+                                value={data.type}
+                                onChange={(e) =>
+                                    setData("type", e.target.value)
+                                }
+                                className="border rounded p-2"
+                            >
+                                <option value="elective">Tự chọn</option>
+                                <option value="required">Bắt buộc</option>
+                            </select>
+                            <input
+                                type="number"
+                                value={data.tuition}
+                                onChange={(e) =>
+                                    setData("tuition", e.target.value)
+                                }
+                                placeholder="Học phí (VNĐ)"
+                                className="border rounded p-2"
+                            />
                         </div>
                     </div>
 
-                    {/* Course Info */}
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <h4 className="font-semibold text-gray-700 mb-2">
-                            ℹ️ Thông tin học phần
-                        </h4>
-                        <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                            <div>
-                                <strong>ID:</strong> #{course.id}
-                            </div>
-                            <div>
-                                <strong>Ngày tạo:</strong>{" "}
-                                {new Date(course.created_at).toLocaleDateString(
-                                    "vi-VN"
-                                )}
-                            </div>
-                            <div>
-                                <strong>Cập nhật:</strong>{" "}
-                                {new Date(course.updated_at).toLocaleDateString(
-                                    "vi-VN"
-                                )}
-                            </div>
-                            <div>
-                                <strong>Trạng thái:</strong>{" "}
-                                <span
-                                    className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                                        course.is_active
-                                            ? "bg-green-100 text-green-800"
-                                            : "bg-gray-100 text-gray-800"
-                                    }`}
-                                >
-                                    {course.is_active ? "Hoạt động" : "Ngừng"}
-                                </span>
-                            </div>
+                    {/* sessions */}
+                    <div>
+                        <h3 className="text-lg font-semibold">
+                            📚 Lớp (Class Sessions)
+                        </h3>
+                        <div className="space-y-3">
+                            {data.class_sessions.map((s, idx) => (
+                                <div key={idx} className="p-3 border rounded">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <div className="font-semibold">
+                                            Lớp {s.class_code || idx + 1}
+                                        </div>
+                                        <div className="space-x-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => addSchedule(idx)}
+                                                className="px-2 py-1 bg-blue-50 rounded"
+                                            >
+                                                + Lịch
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    removeSession(idx)
+                                                }
+                                                className="px-2 py-1 bg-red-50 rounded"
+                                            >
+                                                Xóa
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                        <input
+                                            value={s.class_code}
+                                            onChange={(e) =>
+                                                updateSessionField(
+                                                    idx,
+                                                    "class_code",
+                                                    e.target.value
+                                                )
+                                            }
+                                            placeholder="Mã lớp"
+                                            className="border rounded p-2"
+                                        />
+                                        <select
+                                            value={s.teacher_id}
+                                            onChange={(e) =>
+                                                updateSessionField(
+                                                    idx,
+                                                    "teacher_id",
+                                                    e.target.value
+                                                )
+                                            }
+                                            className="border rounded p-2"
+                                        >
+                                            <option value="">
+                                                -- Giảng viên --
+                                            </option>
+                                            {teachers?.map((t) => (
+                                                <option key={t.id} value={t.id}>
+                                                    {t.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <input
+                                            type="number"
+                                            value={s.max_students}
+                                            onChange={(e) =>
+                                                updateSessionField(
+                                                    idx,
+                                                    "max_students",
+                                                    e.target.value
+                                                )
+                                            }
+                                            placeholder="Sĩ số tối đa"
+                                            className="border rounded p-2"
+                                        />
+                                        <div className="text-sm text-gray-500 p-2">
+                                            Trạng thái: active
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-2 space-y-2">
+                                        {s.schedules &&
+                                            s.schedules.map((sch, si) => (
+                                                <div
+                                                    key={si}
+                                                    className="grid grid-cols-2 md:grid-cols-6 gap-2 items-center"
+                                                >
+                                                    <select
+                                                        value={sch.day_of_week}
+                                                        onChange={(e) =>
+                                                            updateScheduleField(
+                                                                idx,
+                                                                si,
+                                                                "day_of_week",
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        className="border rounded p-2"
+                                                    >
+                                                        <option>Monday</option>
+                                                        <option>Tuesday</option>
+                                                        <option>
+                                                            Wednesday
+                                                        </option>
+                                                        <option>
+                                                            Thursday
+                                                        </option>
+                                                        <option>Friday</option>
+                                                        <option>
+                                                            Saturday
+                                                        </option>
+                                                        <option>Sunday</option>
+                                                    </select>
+                                                    <input
+                                                        type="time"
+                                                        value={sch.start_time}
+                                                        onChange={(e) =>
+                                                            updateScheduleField(
+                                                                idx,
+                                                                si,
+                                                                "start_time",
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        className="border rounded p-2"
+                                                    />
+                                                    <input
+                                                        type="time"
+                                                        value={sch.end_time}
+                                                        onChange={(e) =>
+                                                            updateScheduleField(
+                                                                idx,
+                                                                si,
+                                                                "end_time",
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        className="border rounded p-2"
+                                                    />
+                                                    <input
+                                                        value={sch.room}
+                                                        onChange={(e) =>
+                                                            updateScheduleField(
+                                                                idx,
+                                                                si,
+                                                                "room",
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        placeholder="Phòng"
+                                                        className="border rounded p-2"
+                                                    />
+                                                    <div className="md:col-span-2 text-right">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                removeSchedule(
+                                                                    idx,
+                                                                    si
+                                                                )
+                                                            }
+                                                            className="text-red-600"
+                                                        >
+                                                            Xóa lịch
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-2">
+                            <button
+                                type="button"
+                                onClick={addSession}
+                                className="bg-green-600 text-white px-4 py-2 rounded"
+                            >
+                                + Thêm lớp
+                            </button>
                         </div>
                     </div>
 
-                    {/* Buttons */}
+                    {/* meta & actions */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <select
+                            value={data.semester}
+                            onChange={(e) =>
+                                setData("semester", e.target.value)
+                            }
+                            className="border rounded p-2"
+                        >
+                            <option value="">-- Học kỳ --</option>
+                            <option value="Fall">Fall</option>
+                            <option value="Spring">Spring</option>
+                            <option value="Summer">Summer</option>
+                        </select>
+                        <input
+                            type="number"
+                            value={data.year}
+                            onChange={(e) =>
+                                setData("year", parseInt(e.target.value))
+                            }
+                            className="border rounded p-2"
+                        />
+                        <input
+                            type="number"
+                            value={data.max_students}
+                            onChange={(e) =>
+                                setData("max_students", e.target.value)
+                            }
+                            placeholder="Sĩ số mặc định"
+                            className="border rounded p-2"
+                        />
+                    </div>
+
                     <div className="flex justify-end space-x-3 pt-4 border-t">
                         <Link
                             href={route("admin.courses.index")}
-                            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                            className="px-4 py-2 border rounded"
                         >
                             Hủy
                         </Link>
                         <button
                             type="submit"
                             disabled={processing}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
+                            className="bg-blue-600 text-white px-6 py-2 rounded"
                         >
-                            {processing ? "Đang lưu..." : "Cập nhật"}
+                            {processing ? "Đang lưu..." : "Lưu thay đổi"}
                         </button>
                     </div>
                 </form>

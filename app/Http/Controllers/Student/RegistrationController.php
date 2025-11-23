@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
@@ -10,6 +9,7 @@ use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Department;
 use App\Models\Notification;
+use App\Models\ClassSession;
 
 class RegistrationController extends Controller
 {
@@ -17,11 +17,10 @@ class RegistrationController extends Controller
     {
         $student = Auth::user();
 
-        // Hiển thị học phần chưa đăng ký hoặc đã hủy
         $query = Course::active()
             ->whereDoesntHave('enrollments', function ($q) use ($student) {
                 $q->where('student_id', $student->id)
-                  ->whereIn('status', ['pending', 'approved']); // chỉ loại nếu đang đăng ký
+                  ->whereIn('status', ['pending', 'approved']);
             });
 
         if ($request->filled('department_id')) {
@@ -36,22 +35,24 @@ class RegistrationController extends Controller
             $query->search($request->search);
         }
 
-        $availableCourses = $query->with(['department', 'schedules'])
-                                 ->paginate(12)
-                                 ->withQueryString();
+        $availableCourses = $query->with(['department', 'schedules', 'classSessions' => function($q){
+            $q->withCount(['enrollments as active_enrollments_count' => function($q2){
+                $q2->whereIn('status', ['pending','approved']);
+            }]);
+        }])->paginate(12)->withQueryString();
 
         $departments = Department::orderBy('name')->get();
 
         $myEnrollments = Enrollment::forStudent($student->id)
-            ->with(['course.department', 'course.schedules'])
-            ->orderByDesc('created_at')
-            ->get();
+                                  ->with(['course.department', 'course.schedules', 'classSession.schedules','classSession.teacher'])
+                                  ->orderByDesc('created_at')
+                                  ->get();
 
         return Inertia::render('Student/Registration/Index', [
             'availableCourses' => $availableCourses,
-            'myEnrollments'    => $myEnrollments,
-            'departments'      => $departments,
-            'filters'          => $request->only(['department_id', 'type', 'search']),
+            'myEnrollments' => $myEnrollments,
+            'departments' => $departments,
+            'filters' => $request->only(['department_id', 'type', 'search']),
         ]);
     }
 
@@ -61,9 +62,10 @@ class RegistrationController extends Controller
 
         $validated = $request->validate([
             'course_id' => 'required|exists:courses,id',
+            'class_session_id' => 'nullable|exists:class_sessions,id',
         ]);
 
-        // Kiểm tra trùng nhưng CHỈ trùng nếu pending/approved
+        // only check pending/approved
         $existing = Enrollment::where('student_id', $student->id)
             ->where('course_id', $validated['course_id'])
             ->whereIn('status', ['pending', 'approved'])
@@ -75,7 +77,7 @@ class RegistrationController extends Controller
 
         $course = Course::findOrFail($validated['course_id']);
 
-        // Kiểm tra sĩ số (chỉ tính approved)
+        // capacity check by counting approved
         $currentEnrollments = Enrollment::where('course_id', $course->id)
             ->where('status', 'approved')
             ->count();
@@ -84,16 +86,42 @@ class RegistrationController extends Controller
             return back()->with('error', 'Học phần đã đầy!');
         }
 
+        $sessionId = $validated['class_session_id'] ?? null;
+
+        // validate provided session exists and belongs to course
+        if ($sessionId) {
+            $session = ClassSession::where('id', $sessionId)
+                        ->where('course_id', $course->id)
+                        ->first();
+            if (!$session) $sessionId = null;
+        }
+
+        // auto assign if none provided: find first session with capacity
+        if (!$sessionId) {
+            $session = $course->classSessions()->get()->first(function($s){
+                $count = $s->enrollments()->whereIn('status', ['pending','approved'])->count();
+                return !$s->max_students || $count < $s->max_students;
+            });
+            $sessionId = $session->id ?? null;
+        }
+
         Enrollment::create([
             'student_id' => $student->id,
-            'course_id'  => $validated['course_id'],
-            'status'     => 'pending',
+            'course_id' => $course->id,
+            'class_session_id' => $sessionId,
+            'status' => 'pending',
         ]);
+
+        // update enrolled_count for session if assigned
+        if ($sessionId) {
+            $session = ClassSession::find($sessionId);
+            if ($session) $session->updateEnrolledCount();
+        }
 
         Notification::create([
             'user_id' => $student->id,
-            'type'    => 'enrollment',
-            'title'   => 'Đăng ký học phần',
+            'type' => 'enrollment',
+            'title' => 'Đăng ký học phần',
             'message' => "Bạn đã đăng ký học phần {$course->name} thành công. Vui lòng chờ phê duyệt.",
             'content' => "Bạn đã đăng ký học phần {$course->name} thành công.",
         ]);
@@ -113,8 +141,13 @@ class RegistrationController extends Controller
             return back()->with('error', 'Không thể hủy đăng ký học phần này!');
         }
 
-        // XÓA hoàn toàn → trở về trạng thái như chưa đăng ký
+        $sessionId = $enrollment->class_session_id;
         $enrollment->delete();
+
+        if ($sessionId) {
+            $session = ClassSession::find($sessionId);
+            if ($session) $session->updateEnrolledCount();
+        }
 
         return back()->with('success', 'Đã hủy đăng ký học phần!');
     }

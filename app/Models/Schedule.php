@@ -31,4 +31,8 @@ class Schedule extends Model
     {
         return $this->belongsTo(User::class, 'instructor_id');
     }
+    public function classSession()
+    {
+        return $this->belongsTo(ClassSession::class, 'class_session_id');
+    }
 }

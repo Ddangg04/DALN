@@ -4,24 +4,22 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+class CreateClassSectionsTable extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
         Schema::create('class_sections', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('course_id')->constrained()->onDelete('cascade');
+            $table->foreignId('teacher_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->string('name')->nullable(); // ví dụ: A, B, S1
+            $table->integer('max_students')->nullable();
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
         Schema::dropIfExists('class_sections');
     }
-};
+}
