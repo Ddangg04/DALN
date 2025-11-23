@@ -46,10 +46,8 @@ class RoleMiddleware
     {
         $map = [
             'admin'     => 'admin.dashboard',
-            'teacher'   => 'giangvien.dashboard',
-            'giang-vien'=> 'giangvien.dashboard',
+            'teacher'   => 'student.dashboard',
             'student'   => 'student.dashboard',
-            'sinh-vien' => 'student.dashboard'
         ];
 
         $route = $map[$role] ?? 'home';

@@ -217,6 +217,7 @@ use App\Http\Controllers\Student\MaterialController;
 use App\Http\Controllers\Student\ProfileController ;
 use App\Http\Controllers\Student\NotificationController;
 use App\Http\Controllers\Student\RequestController;
+use App\Models\Course;
 
 Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')->group(function () {
     // Dashboard
@@ -251,4 +252,17 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+});
+Route::get('/debug-course-sessions/{course}', function (Course $course) {
+    $sessions = $course->classSessions()
+        ->with(['teacher', 'schedules'])
+        ->get();
+
+    return response()->json([
+        'course_id' => $course->id,
+        'course_name' => $course->name,
+        'sessions_count' => $sessions->count(),
+        'sessions' => $sessions->toArray(),
+        'is_array' => is_array($sessions->toArray()),
+    ]);
 });

@@ -14,9 +14,10 @@ class GradesController extends Controller
     {
         $student = Auth::user();
 
-        // Lấy cả enrollment có status pending hoặc approved (vì student mới đăng ký đang là pending)
+        // Lấy enrollments của student, chỉ lấy những enrollments có course tồn tại
         $query = Enrollment::forStudent($student->id)
                           ->whereIn('status', ['pending', 'approved'])
+                          ->whereHas('course') // đảm bảo course tồn tại -> tránh null
                           ->with(['course.department', 'grades']);
 
         // Filter by semester (filter trên course)
@@ -35,17 +36,31 @@ class GradesController extends Controller
 
         $enrollments = $query->orderByDesc('created_at')->get();
 
-        // Calculate statistics
-        $totalCredits = $enrollments->sum('course.credits');
+        // Calculate statistics safely (null-safe: nếu course null thì trả 0 / 'Unknown')
+        $totalCredits = $enrollments->reduce(function ($carry, $en) {
+            $credits = 0;
+            if ($en->relationLoaded('course') ? $en->course !== null : isset($en->course)) {
+                $credits = (int) ($en->course->credits ?? 0);
+            } else {
+                // fallback: try to access but guard
+                $credits = (int) (($en->course ?? null)?->credits ?? 0);
+            }
+            return $carry + $credits;
+        }, 0);
+
         $gpa = $enrollments->where('total_score', '>', 0)->avg('total_score') ?? 0;
-        
-        // GPA by semester
+
+        // GPA grouped by semester + year (null-safe key)
         $semesterGPA = $enrollments->groupBy(function($item) {
-            return $item->course->semester . ' ' . $item->course->year;
+            $sem = $item->course?->semester ?? 'Unknown';
+            $yr  = $item->course?->year ?? 'Unknown';
+            return "{$sem} {$yr}";
         })->map(function($items) {
             return [
                 'gpa' => round($items->avg('total_score'), 2),
-                'credits' => $items->sum('course.credits'),
+                'credits' => $items->reduce(function($carry, $en) {
+                    return $carry + (int) (($en->course?->credits) ?? 0);
+                }, 0),
             ];
         });
 
@@ -63,7 +78,7 @@ class GradesController extends Controller
 
     public function show(Enrollment $enrollment)
     {
-         $student = Auth::user();
+        $student = Auth::user();
 
         // Check ownership
         if ($enrollment->student_id !== $student->id) {

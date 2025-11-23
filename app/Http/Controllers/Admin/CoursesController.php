@@ -14,7 +14,8 @@ use Inertia\Inertia;
 
 class CoursesController extends Controller
 {
-   public function index(Request $request)
+
+public function index(Request $request)
 {
     $query = Course::query();
 
@@ -31,25 +32,50 @@ class CoursesController extends Controller
         $query->where('is_active', $request->boolean('is_active'));
     }
 
-    $courses = $query->with([
-                'department',
-                'classSessions' => function($q) {
-                    $q->with(['teacher','schedules']);
-                }
-            ])
-            ->orderByDesc('created_at')
-            ->paginate(15)
-            ->withQueryString();
+    $courses = $query->with('department')
+        ->orderByDesc('created_at')
+        ->paginate(15);
+
+    // Convert to array structure
+    $coursesData = $courses->through(function ($course) {
+        $sessions = ClassSession::where('course_id', $course->id)
+            ->with(['teacher', 'schedules'])
+            ->get();
+
+        return [
+            'id' => $course->id,
+            'code' => $course->code,
+            'name' => $course->name,
+            'description' => $course->description,
+            'credits' => $course->credits,
+            'type' => $course->type,
+            'is_active' => $course->is_active,
+            'department' => $course->department,
+            'max_students' => $course->max_students,
+            'semester' => $course->semester,
+            'year' => $course->year,
+            'tuition' => $course->tuition,
+            'class_sessions' => $sessions->map(fn($s) => [
+                'id' => $s->id,
+                'class_code' => $s->class_code,
+                'teacher' => $s->teacher,
+                'max_students' => $s->max_students,
+                'enrolled_count' => $s->enrolled_count,
+                'status' => $s->status,
+                'schedules' => $s->schedules->toArray(),
+            ])->toArray(),
+            'class_sessions_count' => $sessions->count(),
+        ];
+    });
 
     $departments = Department::orderBy('name')->get();
 
     return Inertia::render('Admin/Courses/Index', [
-        'courses' => $courses,
+        'courses' => $coursesData,
         'departments' => $departments,
-        'filters' => $request->only(['search','department_id','type','is_active','page','class_session_id']),
+        'filters' => $request->only(['search', 'department_id', 'type', 'is_active']),
     ]);
 }
-
     public function create()
     {
         $departments = Department::orderBy('name')->get();
@@ -154,23 +180,26 @@ class CoursesController extends Controller
                         continue;
                     }
 
-                    $sessionData = [
-                        'course_id' => $course->id,
-                        'teacher_id' => $cs['teacher_id'] ?? null,
-                        'class_code' => $cs['class_code'] ?? 'A',
-                        'semester' => $course->semester,
-                        'year' => $course->year,
-                        'max_students' => $cs['max_students'] ?? $course->max_students ?? 30,
-                        'enrolled_count' => 0,
-                        'status' => 'active',
-                    ];
+           $semesterValue = $validated['semester'] 
+    ?? $course->semester 
+    ?? 'Spring'; // hoặc giá trị mặc định tùy bạn
 
-                    Log::info("Creating session {$index}", $sessionData);
+$sessionData = [
+    'course_id' => $course->id,
+    'teacher_id' => $cs['teacher_id'] ?? null,
+    'class_code' => $cs['class_code'] ?? null,
+    'semester' => $semesterValue,
+    'year' => $course->year,
+    'max_students' => $cs['max_students'] ?? $course->max_students,
+    'enrolled_count' => 0,
+    'status' => 'active', // đã fix kiểu
+];
+Log::info("Creating session {$index} with data:", $sessionData);
+$session = ClassSession::create($sessionData);
 
-                    $session = ClassSession::create($sessionData);
 
                     Log::info("✅ Session {$index} created", [
-                        'session_id' => $session->id,
+                        'class_session_id' => $session->id,
                         'class_code' => $session->class_code,
                     ]);
 
@@ -393,22 +422,20 @@ class CoursesController extends Controller
         }
     }
 
-    public function destroy(Course $course)
+   public function destroy(Course $course)
     {
-        if ($course->enrollments()->exists()) {
-            return back()->with('error', 'Không thể xóa học phần đang có sinh viên đăng ký!');
-        }
-
-        foreach ($course->classSessions as $session) {
-            $session->schedules()->delete();
-            $session->delete();
-        }
+        // Kiểm tra xem có sinh viên đang học không (nếu có relationship với enrollments)
+        // if ($course->enrollments()->exists()) {
+        //     return back()->with('error', 'Không thể xóa học phần đang có sinh viên đăng ký!');
+        // }
 
         $course->delete();
 
-        return redirect()->route('admin.courses.index')->with('success', 'Học phần đã được xóa!');
+        return redirect()->route('admin.courses.index')
+                        ->with('success', 'Học phần đã được xóa!');
     }
 
+    // Toggle active status
     public function toggleActive(Course $course)
     {
         $course->update([
@@ -417,7 +444,7 @@ class CoursesController extends Controller
 
         return back()->with('success', 'Đã cập nhật trạng thái học phần!');
     }
-
+    
     public function duplicate(Course $course)
     {
         DB::beginTransaction();

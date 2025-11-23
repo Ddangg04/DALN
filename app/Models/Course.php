@@ -1,15 +1,16 @@
 <?php
+
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use Illuminate\Support\Facades\Schema;
+use App\Models\ClassSession;
 class Course extends Model
 {
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
- protected $fillable = [
+    protected $fillable = [
         'code',
         'name',
         'description',
@@ -31,8 +32,12 @@ class Course extends Model
         'tuition' => 'decimal:2',
     ];
 
+    // Return virtual attribute 'class_sessions' for front-end convenience
+    protected $appends = ['class_sessions'];
 
+    // -----------------------
     // Relationships
+    // -----------------------
     public function department()
     {
         return $this->belongsTo(Department::class);
@@ -40,69 +45,110 @@ class Course extends Model
 
     public function classSessions()
     {
+        // Ensure you have App\Models\ClassSession class
         return $this->hasMany(ClassSession::class, 'course_id');
     }
 
+    /**
+     * schedules via class_sessions
+     */
     public function schedules()
     {
-        return $this->hasMany(Schedule::class);
+        return $this->hasManyThrough(
+            Schedule::class,
+            ClassSession::class,
+            'course_id',        // class_sessions.course_id
+            'class_session_id', // schedules.class_session_id
+            'id',
+            'id'
+        );
     }
 
+    /**
+     * enrollments via class_sessions -> enrollments(class_session_id)
+     */
     public function enrollments()
     {
-        return $this->hasMany(Enrollment::class);
+        return $this->hasManyThrough(
+            Enrollment::class,
+            ClassSession::class,
+            'course_id',        // class_sessions.course_id
+            'class_session_id', // enrollments.class_session_id
+            'id',
+            'id'
+        );
     }
 
-    public function materials()
-    {
-        return $this->hasMany(Material::class);
-    }
-
+    // -----------------------
     // Scopes
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
-
+    // -----------------------
     public function scopeRequired($query)
     {
-        return $query->where('type', 'required');
+        if (Schema::hasColumn($this->getTable(), 'type')) {
+            return $query->where($this->getTable() . '.type', 'required');
+        }
+        return $query;
     }
 
     public function scopeElective($query)
     {
-        return $query->where('type', 'elective');
+        if (Schema::hasColumn($this->getTable(), 'type')) {
+            return $query->where($this->getTable() . '.type', 'elective');
+        }
+        return $query;
     }
 
-    public function scopeSearch($query, $search)
+    public function scopeActive($query)
     {
-        return $query->where(function($q) use ($search) {
-            $q->where('name', 'like', "%{$search}%")
-              ->orWhere('code', 'like', "%{$search}%")
-              ->orWhere('description', 'like', "%{$search}%");
-        });
-    }
+        if (Schema::hasColumn($this->getTable(), 'is_active')) {
+            return $query->where($this->getTable() . '.is_active', true);
+        }
 
+        if (Schema::hasColumn($this->getTable(), 'status')) {
+            return $query->where($this->getTable() . '.status', 'active');
+        }
+
+        return $query;
+    }
+    // -----------------------
     // Accessors
-    public function getFullCodeAttribute()
+    // -----------------------
+    /**
+     * Return an array of class sessions suitable for frontend (appends => 'class_sessions').
+     * This uses the relation query directly (not dynamic property) to avoid undefined property issues.
+     *
+     * @return array
+     */
+    public function getClassSessionsAttribute()
     {
-        return strtoupper($this->code);
-    }
+        // Use the relation query to ensure a Collection is returned regardless of relationLoaded state.
+        $sessions = $this->classSessions()
+            ->with(['teacher', 'schedules'])
+            ->orderBy('class_code')
+            ->get();
 
-    public function getEnrolledStudentsCountAttribute()
-    {
-        return $this->enrollments()->where('status', 'approved')->count();
-    }
-
-    public function getIsFullAttribute()
-    {
-        if (!$this->max_students) return false;
-        return $this->enrolled_students_count >= $this->max_students;
-    }
-
-    public function getFormattedTuitionAttribute()
-    {
-        if (!$this->tuition) return 'Chưa có';
-        return number_format($this->tuition, 0, ',', '.') . ' VNĐ';
+        return $sessions->map(function ($session) {
+            return [
+                'id' => $session->id,
+                'class_code' => $session->class_code ?? null,
+                'teacher_id' => $session->teacher_id ?? null,
+                'teacher' => $session->teacher ? [
+                    'id' => $session->teacher->id,
+                    'name' => $session->teacher->name,
+                ] : null,
+                'max_students' => $session->max_students ?? null,
+                'enrolled_count' => $session->enrolled_count ?? 0,
+                'status' => $session->status ?? null,
+                'schedules' => $session->schedules->map(function ($schedule) {
+                    return [
+                        'id' => $schedule->id,
+                        'day_of_week' => $schedule->day_of_week,
+                        'start_time' => $schedule->start_time,
+                        'end_time' => $schedule->end_time,
+                        'room' => $schedule->room,
+                    ];
+                })->toArray(),
+            ];
+        })->toArray();
     }
 }

@@ -47,7 +47,7 @@ class TeacherDataSeeder extends Seeder
                     'end_time' => '10:00',
                     'room' => 'A' . rand(101, 505),
                     'semester' => 'Fall',
-                    'year' => 2024,
+                    'year' => 2025,
                 ]);
             }
 
