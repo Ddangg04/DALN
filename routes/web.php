@@ -32,35 +32,48 @@ use App\Models\Statement;
 |--------------------------------------------------------------------------
 */
 
-// Home / Welcome
+// Home / Welcome (Unified for Guest & Authenticated)
 Route::get('/', function () {
+    // Nếu đã đăng nhập nhưng chưa xác thực email, buộc phải đi xác thực
+    if (Auth::check() && !Auth::user()->hasVerifiedEmail()) {
+        return redirect()->route('verification.notice')->with('status', 'must-verify');
+    }
+
     $campaigns = Campaign::where('status', 'active')->latest()->limit(3)->get();
     $latestStatements = Statement::with('campaign:id,title')->where('type', 'in')->latest()->limit(10)->get();
+    
+    // Top Donors for Golden Board
+    $topDonors = \App\Models\Donation::select('user_id', \Illuminate\Support\Facades\DB::raw('SUM(amount) as total_amount'))
+        ->where('status', 'completed')
+        ->whereNotNull('user_id')
+        ->groupBy('user_id')
+        ->orderByDesc('total_amount')
+        ->limit(5)
+        ->with('user:id,name,avatar')
+        ->get()
+        ->map(function($item) {
+            return [
+                'name' => $item->user->name,
+                'avatar' => $item->user->avatar,
+                'total_amount' => $item->total_amount,
+            ];
+        });
 
-    if (Auth::check()) {
-        $user = Auth::user();
-        if ($user->hasRole('admin')) {
-            return redirect()->route('admin.dashboard');
-        }
-        // Fetch user donation stats
-        $donations = $user->donations()->with('campaign:id,title')->latest()->limit(5)->get();
-        $totalDonated = $user->donations()->where('status', 'completed')->sum('amount');
-        $campaignsSupported = $user->donations()->where('status', 'completed')->distinct('campaign_id')->count('campaign_id');
-
-        return Inertia::render('Dashboard', [
-            'recentDonations' => $donations,
-            'totalDonated' => $totalDonated,
-            'campaignsSupported' => $campaignsSupported,
-            'latestStatements' => $latestStatements,
-            'featuredCampaigns' => $campaigns,
-        ]);
-    }
     return Inertia::render('Welcome', [
-        'auth' => ['user' => null],
         'latestStatements' => $latestStatements,
         'featuredCampaigns' => $campaigns,
+        'topDonors' => $topDonors,
     ]);
 })->name('home');
+
+// Profile Routes
+use App\Http\Controllers\ProfileController;
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
 // Auth Routes
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -81,8 +94,8 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 
-// Chatbot AI
-Route::post('/api/chat', [ChatbotController::class, 'chat'])->name('api.chat');
+// Chatbot AI (Bắt buộc xác thực Email)
+Route::post('/api/chat', [ChatbotController::class, 'chat'])->middleware(['auth', 'verified'])->name('api.chat');
 
 // Email Verification Routes
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
@@ -93,14 +106,15 @@ Route::middleware('auth')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
 
-    Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
-        ->middleware(['signed', 'throttle:6,1'])
-        ->name('verification.verify');
-
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
         ->middleware('throttle:6,1')
         ->name('verification.send');
 });
+
+// Email Verification (Public but Signed)
+Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');
 
 // Public Campaign Routes
 Route::get('/campaigns', [CampaignController::class, 'index'])->name('campaigns.index');
@@ -115,7 +129,7 @@ Route::get('/news', [NewsController::class, 'index'])->name('news.index');
 Route::get('/news/{news:slug}', [NewsController::class, 'show'])->name('news.show');
 
 // Admin routes
-Route::middleware(['web', 'auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['web', 'auth', 'role:admin', 'verified'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
@@ -127,8 +141,16 @@ Route::middleware(['web', 'auth', 'role:admin'])->prefix('admin')->name('admin.'
     Route::post('/users/{user}/reset-password', [AdminUserController::class, 'resetPassword'])->name('users.reset-password');
     Route::post('/users/{user}/roles', [AdminUserController::class, 'assignRoles'])->name('users.assign-roles');
 
+    Route::post('/campaigns/{id}/restore', [AdminCampaignController::class, 'restore'])->name('campaigns.restore');
+    Route::delete('/campaigns/{id}/force-delete', [AdminCampaignController::class, 'forceDelete'])->name('campaigns.force-delete');
     Route::resource('campaigns', AdminCampaignController::class);
+
+    Route::post('/donations/{id}/restore', [AdminDonationController::class, 'restore'])->name('donations.restore');
+    Route::delete('/donations/{id}/force-delete', [AdminDonationController::class, 'forceDelete'])->name('donations.force-delete');
     Route::resource('donations', AdminDonationController::class);
+
+    Route::post('/news/{id}/restore', [AdminNewsController::class, 'restore'])->name('news.restore');
+    Route::delete('/news/{id}/force-delete', [AdminNewsController::class, 'forceDelete'])->name('news.force-delete');
     Route::resource('news', AdminNewsController::class);
 
     // AI API

@@ -5,6 +5,12 @@ export default function Dashboard({ donations, totalDonated, campaignsSupported,
     const { auth } = usePage().props;
     const user = auth.user;
 
+    const getAvatarUrl = (path) => {
+        if (!path) return null;
+        if (path.startsWith('http')) return path;
+        return `/storage/${path}`;
+    };
+
     const formatMoney = (amount) =>
         new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
 
@@ -49,8 +55,12 @@ export default function Dashboard({ donations, totalDonated, campaignsSupported,
                         <div className="flex flex-col md:flex-row md:items-end md:justify-between -mt-16 relative z-10">
                             {/* User Profile Info */}
                             <div className="flex items-end space-x-6">
-                                <div className="w-32 h-32 rounded-[2.5rem] bg-white border-8 border-white shadow-2xl flex items-center justify-center text-5xl font-black text-rose-600 transition-transform hover:scale-105 duration-300">
-                                    {user?.name?.charAt(0).toUpperCase() || '?'}
+                                <div className="w-32 h-32 rounded-[2.5rem] bg-white border-8 border-white shadow-2xl flex items-center justify-center text-5xl font-black text-rose-600 transition-transform hover:scale-105 duration-300 overflow-hidden">
+                                    {user?.avatar ? (
+                                        <img src={getAvatarUrl(user.avatar)} alt={user.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        user?.name?.charAt(0).toUpperCase() || '?'
+                                    )}
                                 </div>
                                 <div className="mb-4">
                                     <div className="flex items-center gap-3">

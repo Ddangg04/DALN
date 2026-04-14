@@ -1,11 +1,12 @@
 <?php
 
 namespace App\Models;
-
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Donation extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'user_id', 'campaign_id', 'amount', 'payment_method', 
         'transaction_id', 'status', 'donor_name', 

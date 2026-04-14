@@ -16,6 +16,11 @@ class NewsController extends Controller
     {
         $query = News::query();
 
+        // Handle Trashed status
+        if ($request->input('status') === 'trashed') {
+            $query->onlyTrashed();
+        }
+
         if ($search = $request->input('search')) {
             $query->where('title', 'like', "%{$search}%");
         }
@@ -24,7 +29,7 @@ class NewsController extends Controller
 
         return Inertia::render('Admin/News/Index', [
             'news' => $news,
-            'filters' => $request->only('search'),
+            'filters' => $request->only('search', 'status'),
         ]);
     }
 
@@ -101,14 +106,31 @@ class NewsController extends Controller
 
     public function destroy(News $news)
     {
+        $news->delete();
+
+        return redirect()->route('admin.news.index')
+            ->with('success', 'Tin tức đã được chuyển vào thùng rác.');
+    }
+
+    public function restore($id)
+    {
+        $news = News::withTrashed()->findOrFail($id);
+        $news->restore();
+
+        return redirect()->back()->with('success', 'Tin tức đã được khôi phục.');
+    }
+
+    public function forceDelete($id)
+    {
+        $news = News::withTrashed()->findOrFail($id);
+
         if ($news->image_url && !Str::startsWith($news->image_url, 'http')) {
             $oldPath = str_replace('/storage/', '', $news->image_url);
             Storage::disk('public')->delete($oldPath);
         }
 
-        $news->delete();
+        $news->forceDelete();
 
-        return redirect()->route('admin.news.index')
-            ->with('success', 'Tin tức đã được xóa.');
+        return redirect()->back()->with('success', 'Tin tức đã được xóa vĩnh viễn.');
     }
 }

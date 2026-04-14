@@ -82,9 +82,12 @@ class HandleInertiaRequests extends Middleware
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'avatar' => $user->avatar,
+                'google_id' => $user->google_id,
                 'role' => $primaryRole,
                 'roles' => array_map(fn($r) => ['name' => $r], $roles),
                 'is_active' => $user->is_active ?? true,
+                'created_at' => $user->created_at,
             ];
         }
 

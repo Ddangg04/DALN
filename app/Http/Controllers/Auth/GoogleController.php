@@ -36,12 +36,21 @@ class GoogleController extends Controller
                     'name' => $googleUser->getName(),
                     'password' => bcrypt(Str::random(16)), // tạo mật khẩu random
                     'email_verified_at' => now(), // Tự động xác thực vì Google đã xác nhận
+                    'avatar' => $googleUser->getAvatar(), // Lưu ảnh đại diện
                 ]
             );
 
-            // Đảm bảo user cũ cũng được verify nếu login qua Google
+            // Đảm bảo user cũ cũng được verify và update avatar nếu login qua Google
+            $updateData = [];
             if (!$user->email_verified_at) {
-                $user->update(['email_verified_at' => now()]);
+                $updateData['email_verified_at'] = now();
+            }
+            if (!$user->avatar || $user->avatar !== $googleUser->getAvatar()) {
+                $updateData['avatar'] = $googleUser->getAvatar();
+            }
+
+            if (!empty($updateData)) {
+                $user->update($updateData);
             }
 
             // Đăng nhập

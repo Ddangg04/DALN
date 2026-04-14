@@ -1,11 +1,19 @@
 import { Head, Link, router } from "@inertiajs/react";
 import ChatbotUI from "@/Components/ChatbotUI";
 import { useState } from "react";
+import AppLayout from "@/Layouts/AppLayout";
 
-export default function Welcome({ auth, featuredCampaigns, latestStatements }) {
+export default function Welcome({ auth, featuredCampaigns, latestStatements, topDonors }) {
     const [searchQuery, setSearchQuery] = useState("");
     const campaigns = featuredCampaigns || [];
     const statements = latestStatements || [];
+    const donors = topDonors || [];
+
+    const getAvatarUrl = (path) => {
+        if (!path) return null;
+        if (path.startsWith('http')) return path;
+        return `/storage/${path}`;
+    };
 
     const handleSearch = (e) => {
         if (e) e.preventDefault();
@@ -17,8 +25,14 @@ export default function Welcome({ auth, featuredCampaigns, latestStatements }) {
     };
 
     const formatDateShort = (dateStr) => {
-        const d = new Date(dateStr);
-        return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+        if (!dateStr) return '--:--';
+        try {
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return '--:--';
+            return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+        } catch (e) {
+            return '--:--';
+        }
     };
 
     const safeRoute = (name, ...params) => {
@@ -26,62 +40,8 @@ export default function Welcome({ auth, featuredCampaigns, latestStatements }) {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+        <AppLayout auth={auth}>
             <Head title="Kết nối yêu thương - VNHeart Thiện Nguyện" />
-
-            {/* Navbar */}
-            <nav className="bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 shadow-sm transition-all duration-300">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between h-20">
-                        {/* Logo */}
-                        <Link href="/" className="flex items-center space-x-3 cursor-pointer group">
-                            <div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-red-600 rounded-xl flex items-center justify-center text-white shadow-lg overflow-hidden relative group-hover:shadow-rose-500/50 transition duration-300">
-                                <span className="absolute inset-0 bg-white/20 blur-sm"></span>
-                                <span className="relative font-bold text-xl">♥</span>
-                            </div>
-                            <span className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-rose-600 to-red-500 tracking-tight">
-                                VNHeart
-                            </span>
-                        </Link>
-
-                        {/* Navigation Links */}
-                        <div className="hidden md:flex items-center space-x-8">
-                            <Link href={safeRoute('campaigns.index')} className="text-gray-600 hover:text-rose-600 font-bold transition-colors">Dự án</Link>
-                            <Link href={safeRoute('news.index')} className="text-gray-600 hover:text-rose-600 font-bold transition-colors">Tin tức</Link>
-                            <Link href={safeRoute('transparency.index')} className="text-gray-600 hover:text-rose-600 font-bold transition-colors">Minh bạch</Link>
-                            <a href="#about" className="text-gray-600 hover:text-rose-600 font-bold transition-colors">Về chúng tôi</a>
-                        </div>
-
-                        {/* Auth Buttons */}
-                        <div className="flex items-center space-x-4">
-                            {auth.user ? (
-                                <Link
-                                    href={route('home')}
-                                    className="text-gray-700 hover:text-rose-600 font-bold flex items-center bg-rose-50 px-4 py-2 rounded-full border border-rose-100 transition"
-                                >
-                                    <span className="mr-2">👤</span>
-                                    {auth.user.name}
-                                </Link>
-                            ) : (
-                                <>
-                                    <Link
-                                        href={route('login')}
-                                        className="text-gray-600 hover:text-gray-900 font-bold px-4 py-2 transition"
-                                    >
-                                        Đăng nhập
-                                    </Link>
-                                    <Link
-                                        href={route('register')}
-                                        className="bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white font-bold px-6 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all inline-flex items-center scale-100 hover:scale-105 active:scale-95 text-sm uppercase tracking-wider"
-                                    >
-                                        Góp quỹ
-                                    </Link>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </nav>
 
             {/* Transparency Ticker (Dòng chảy minh bạch) */}
             <div className="bg-rose-50 border-b border-rose-100 overflow-hidden whitespace-nowrap py-3 relative">
@@ -238,26 +198,32 @@ export default function Welcome({ auth, featuredCampaigns, latestStatements }) {
                 </div>
             </div>
 
-            {/* Bảng vinh danh (Top Donors) - Thiennguyen.app style */}
+            {/* Bảng vinh danh (Top Donors) */}
             <div className="py-24 bg-rose-50/50">
                 <div className="max-w-7xl mx-auto px-4 text-center">
                     <span className="text-rose-500 font-bold uppercase tracking-widest text-xs mb-4 block">Những trái tim vàng</span>
                     <h2 className="text-4xl font-black text-gray-900 mb-12">Bảng vàng vinh danh</h2>
                     
                     <div className="flex flex-wrap justify-center gap-6">
-                        {[
-                            { name: 'Nguyễn Văn A', amount: '15,000,000đ', img: 'https://i.pravatar.cc/100?img=11' },
-                            { name: 'Quỹ Từ Thiện ABC', amount: '50,000,000đ', img: 'https://i.pravatar.cc/100?img=12' },
-                            { name: 'Trần Thị B', amount: '10,000,000đ', img: 'https://i.pravatar.cc/100?img=13' },
-                            { name: 'Nhà hảo tâm ẩn danh', amount: '5,000,000đ', img: 'https://i.pravatar.cc/100?img=14' },
-                            { name: 'Lê Văn C', amount: '20,000,000đ', img: 'https://i.pravatar.cc/100?img=15' },
-                        ].map((d, i) => (
-                            <div key={i} className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col items-center hover:shadow-xl hover:-translate-y-2 transition duration-300 w-48">
-                                <img src={d.img} className="w-16 h-16 rounded-full border-4 border-rose-50 mb-4" />
+                        {donors.length > 0 ? donors.map((d, i) => (
+                            <div key={i} className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col items-center hover:shadow-xl hover:-translate-y-2 transition duration-300 w-48 group">
+                                <div className="w-20 h-20 rounded-full border-4 border-rose-50 mb-4 overflow-hidden shadow-inner group-hover:border-rose-200 transition-colors">
+                                    {d.avatar ? (
+                                        <img src={getAvatarUrl(d.avatar)} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full bg-rose-50 flex items-center justify-center font-black text-rose-300 text-2xl uppercase">
+                                            {d.name.charAt(0)}
+                                        </div>
+                                    )}
+                                </div>
                                 <p className="font-black text-gray-900 text-sm mb-1 text-center line-clamp-1">{d.name}</p>
-                                <p className="text-rose-600 font-black text-xs">{d.amount}</p>
+                                <p className="text-rose-600 font-black text-xs">
+                                    {new Intl.NumberFormat('vi-VN').format(d.total_amount)}đ
+                                </p>
                             </div>
-                        ))}
+                        )) : (
+                            <p className="text-gray-400 font-bold italic py-10">Đang cập nhật danh sách nhà hảo tâm...</p>
+                        )}
                     </div>
                 </div>
             </div>
@@ -291,55 +257,9 @@ export default function Welcome({ auth, featuredCampaigns, latestStatements }) {
                                 <p className="font-bold text-rose-100 tracking-[0.2em] uppercase text-sm italic">VNHeart Foundation</p>
                             </div>
                         </div>
-                        <div className="absolute -top-10 -right-10 w-64 h-64 bg-rose-100 rounded-full blur-3xl opacity-50 z-0"></div>
-                        <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-blue-100 rounded-full blur-3xl opacity-50 z-0"></div>
                     </div>
                 </div>
             </div>
-
-            {/* Footer */}
-            <footer className="bg-gray-900 pt-24 pb-12 text-white">
-                <div className="max-w-7xl mx-auto px-4">
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-16 mb-20">
-                        <div className="lg:col-span-2">
-                             <Link href="/" className="flex items-center space-x-3 mb-8">
-                                <div className="w-10 h-10 bg-rose-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">♥</div>
-                                <span className="text-2xl font-black text-white border-b-4 border-rose-500">VNHeart</span>
-                            </Link>
-                            <p className="text-gray-400 max-w-sm font-medium leading-relaxed mb-8">
-                                VNHeart là mạng lưới thiện nguyện số hóa minh bạch, trực thuộc quỹ VNHeart Foundation. Cam kết 100% không thu phí quản lý từ nguồn tiền quyên góp.
-                            </p>
-                            <div className="flex space-x-4">
-                                {[1,2,3,4].map(i => (
-                                    <a key={i} href="#" className="w-10 h-10 bg-white/5 hover:bg-rose-600 rounded-xl flex items-center justify-center transition">
-                                        <div className="w-5 h-5 bg-white/20 rounded-sm"></div>
-                                    </a>
-                                ))}
-                            </div>
-                        </div>
-                        <div>
-                            <h4 className="font-black mb-8 uppercase tracking-widest text-xs text-rose-500">Nền tảng</h4>
-                            <ul className="space-y-4 text-gray-400 font-bold text-sm">
-                                <li><Link href={route('campaigns.index')} className="hover:text-white transition">Dự án cộng đồng</Link></li>
-                                <li><Link href={route('transparency.index')} className="hover:text-white transition">Hệ thống Minh bạch</Link></li>
-                                <li><Link href={route('news.index')} className="hover:text-white transition">Tin tức & Sự kiện</Link></li>
-                                <li><a href="#" className="hover:text-white transition">Quy chế hoạt động</a></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 className="font-black mb-8 uppercase tracking-widest text-xs text-rose-500">Liên hệ</h4>
-                            <ul className="space-y-4 text-gray-400 font-bold text-sm">
-                                <li>📞 1900 1234 (8:00 - 22:00)</li>
-                                <li>✉️ hotro@vnheart.vn</li>
-                                <li>📍 Cầu Giấy, Hà Nội</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div className="pt-12 border-t border-white/5 text-center text-gray-500 text-[10px] font-bold uppercase tracking-[0.3em]">
-                        © 2026 VNHeart Foundation. Tất cả quyền được bảo lưu.
-                    </div>
-                </div>
-            </footer>
 
             <ChatbotUI />
 
@@ -363,6 +283,6 @@ export default function Welcome({ auth, featuredCampaigns, latestStatements }) {
                     animation-play-state: paused;
                 }
             `}</style>
-        </div>
+        </AppLayout>
     );
 }

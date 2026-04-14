@@ -4,8 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class Campaign extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'title', 'slug', 'description', 'content', 
         'target_amount', 'raised_amount', 'start_date', 
