@@ -1,14 +1,16 @@
 import { Head, Link, useForm } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
-export default function EditUser({ user, roles }) {
+export default function EditUser({ user, roles, activityAreas }) {
     // Collect user's assigned roles (names)
     const currentRoles = user.roles ? user.roles.map(r => r.name) : [];
+    const currentAreas = user.activity_areas ? user.activity_areas.map(a => a.id) : [];
 
     const { data, setData, put, processing, errors } = useForm({
         name: user.name || "",
         email: user.email || "",
         roles: currentRoles,
+        activity_areas: currentAreas,
         phone: user.phone || "",
         address: user.address || "",
         is_active: user.is_active === undefined ? true : !!user.is_active,
@@ -19,6 +21,14 @@ export default function EditUser({ user, roles }) {
             setData("roles", data.roles.filter(r => r !== roleName));
         } else {
             setData("roles", [...data.roles, roleName]);
+        }
+    };
+
+    const handleAreaToggle = (areaId) => {
+        if (data.activity_areas.includes(areaId)) {
+            setData("activity_areas", data.activity_areas.filter(id => id !== areaId));
+        } else {
+            setData("activity_areas", [...data.activity_areas, areaId]);
         }
     };
 
@@ -36,7 +46,8 @@ export default function EditUser({ user, roles }) {
             user: "Người dùng (Cơ bản)",
             donor: "Nhà hảo tâm",
             volunteer: "Tình nguyện viên",
-            requester: "Người kêu gọi"
+            requester: "Người kêu gọi",
+            area_manager: "Quản lý khu vực"
         };
         return map[r] || r;
     };
@@ -149,7 +160,7 @@ export default function EditUser({ user, roles }) {
                                             onChange={() => handleRoleToggle(role)}
                                             className="w-5 h-5 text-rose-600 border-gray-300 rounded focus:ring-rose-500"
                                         />
-                                        <span className="ml-3 font-medium text-gray-800 capitalize">
+                                        <span className="ml-3 font-medium text-gray-800">
                                             {translateRole(role)}
                                         </span>
                                     </label>
@@ -157,6 +168,36 @@ export default function EditUser({ user, roles }) {
                             </div>
                             {errors.roles && <p className="mt-2 text-sm text-red-600">{errors.roles}</p>}
                         </div>
+
+                        {/* Quản lý Khu vực (Chỉ hiện nếu là Area Manager) */}
+                        {data.roles.includes('area_manager') && (
+                            <div className="pt-4 animate-in fade-in slide-in-from-top-4">
+                                <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">
+                                    Khu vực Quản lý
+                                </h3>
+                                <p className="text-sm text-gray-500 mb-4 text-rose-600 font-medium">⚠️ Tài khoản này là Quản lý khu vực. Vui lòng chọn địa bàn phụ trách:</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {activityAreas && activityAreas.map(area => (
+                                        <label key={area.id} className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${data.activity_areas.includes(area.id) ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'}`}>
+                                            <input
+                                                type="checkbox"
+                                                checked={data.activity_areas.includes(area.id)}
+                                                onChange={() => handleAreaToggle(area.id)}
+                                                className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                            />
+                                            <div className="ml-3">
+                                                <div className="font-bold text-gray-800">{area.name}</div>
+                                                <div className="text-xs text-gray-500 italic">{area.description || 'Không có mô tả'}</div>
+                                            </div>
+                                        </label>
+                                    ))}
+                                </div>
+                                {activityAreas && activityAreas.length === 0 && (
+                                    <p className="text-sm text-gray-400 italic">Chưa có khu vực hoạt động nào được tạo trong hệ thống.</p>
+                                )}
+                                {errors.activity_areas && <p className="mt-2 text-sm text-red-600">{errors.activity_areas}</p>}
+                            </div>
+                        )}
 
                         <div className="flex justify-end space-x-4 pt-6 border-t">
                             <Link

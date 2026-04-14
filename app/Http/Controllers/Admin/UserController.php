@@ -70,8 +70,9 @@ class UserController extends Controller
     public function edit(User $user)
     {
         return Inertia::render('Admin/Users/Edit', [
-            'user' => $user->load('roles'),
+            'user' => $user->load(['roles', 'activityAreas']),
             'roles' => Role::pluck('name'),
+            'activityAreas' => \App\Models\ActivityArea::all(),
         ]);
     }
 
@@ -84,6 +85,8 @@ class UserController extends Controller
             'email' => ['required','email','max:255', Rule::unique('users','email')->ignore($user->id)],
             'roles' => ['nullable','array'],
             'roles.*' => ['string', Rule::in($availableRoles)],
+            'activity_areas' => ['nullable','array'],
+            'activity_areas.*' => ['exists:activity_areas,id'],
             'phone' => ['nullable','string','max:30'],
             'address' => ['nullable','string','max:1000'],
             'is_active' => ['nullable','boolean'],
@@ -97,8 +100,12 @@ class UserController extends Controller
             'is_active' => $data['is_active'] ?? $user->is_active,
         ]);
 
-        if (!empty($data['roles'])) {
+        if (isset($data['roles'])) {
             $user->syncRoles($data['roles']);
+        }
+
+        if (isset($data['activity_areas'])) {
+            $user->activityAreas()->sync($data['activity_areas']);
         }
 
         return redirect()->route('admin.users.index')->with('success','Cập nhật người dùng thành công.');
@@ -123,5 +130,16 @@ class UserController extends Controller
 
         $user->syncRoles($data['roles'] ?? []);
         return back()->with('success','Cập nhật vai trò thành công.');
+    }
+
+    public function assignAreas(Request $request, User $user)
+    {
+        $data = $request->validate([
+            'activity_areas' => ['nullable','array'],
+            'activity_areas.*' => ['exists:activity_areas,id'],
+        ]);
+
+        $user->activityAreas()->sync($data['activity_areas'] ?? []);
+        return back()->with('success','Cập nhật khu vực quản lý thành công.');
     }
 }

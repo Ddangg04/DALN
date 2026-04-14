@@ -27,6 +27,7 @@ export default function AuthenticatedLayout({ header, children }) {
             "admin.campaigns.index": "/admin/campaigns",
             "admin.donations.index": "/admin/donations",
             "admin.news.index": "/admin/news",
+            "admin.areas.index": "/admin/areas",
             "admin.users.create": "/admin/users/create",
             "campaigns.index": "/campaigns",
             "home": "/",
@@ -57,6 +58,7 @@ export default function AuthenticatedLayout({ header, children }) {
             { name: "Chiến dịch", routeName: "admin.campaigns.index", icon: "heart" },
             { name: "Quyên góp", routeName: "admin.donations.index", icon: "money" },
             { name: "Tin tức", routeName: "admin.news.index", icon: "news" },
+            { name: "Quản lý Khu vực", routeName: "admin.areas.index", icon: "map" },
         ];
 
         if (roleNormalized === "admin" || roleNormalized === "administrator") return adminItems;
@@ -73,6 +75,7 @@ export default function AuthenticatedLayout({ header, children }) {
             heart: <svg {...common}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>,
             money: <svg {...common}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
             news: <svg {...common}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>,
+            map: <svg {...common}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>,
         };
         return icons[iconName] ?? icons.dashboard;
     };

@@ -1,7 +1,10 @@
 import { Head, Link, router } from "@inertiajs/react";
 import ChatbotUI from "@/Components/ChatbotUI";
-import { useState } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import AppLayout from "@/Layouts/AppLayout";
+import axios from "axios";
+import { MapPin, Search, Phone, Mail, Loader2, User, Map as MapIcon, ChevronDown, Check } from "lucide-react";
+import { Combobox, ComboboxInput, ComboboxOptions, ComboboxOption, Transition } from '@headlessui/react';
 
 export default function Welcome({ auth, featuredCampaigns, latestStatements, topDonors }) {
     const [searchQuery, setSearchQuery] = useState("");
@@ -261,6 +264,9 @@ export default function Welcome({ auth, featuredCampaigns, latestStatements, top
                 </div>
             </div>
 
+            {/* Area Manager Search Section */}
+            <AreaSearchSection />
+
             <ChatbotUI />
 
             <style>{`
@@ -284,5 +290,307 @@ export default function Welcome({ auth, featuredCampaigns, latestStatements, top
                 }
             `}</style>
         </AppLayout>
+    );
+}
+
+
+
+function AreaSearchSection() {
+    const [provinces, setProvinces] = useState([]);
+    const [districts, setDistricts] = useState([]);
+    const [wards, setWards] = useState([]);
+    const [selection, setSelection] = useState({ province: "", district: "", ward: "" });
+    const [managers, setManagers] = useState([]);
+    const [searching, setSearching] = useState(false);
+    const [searched, setSearched] = useState(false);
+
+    // Queries for filtering
+    const [provinceQuery, setProvinceQuery] = useState("");
+    const [districtQuery, setDistrictQuery] = useState("");
+    const [wardQuery, setWardQuery] = useState("");
+
+    useEffect(() => {
+        axios.get('/api/provinces').then(res => setProvinces(res.data));
+    }, []);
+
+    const handleProvinceChange = (id) => {
+        setSelection({ province: id, district: "", ward: "" });
+        setDistricts([]);
+        setWards([]);
+        setDistrictQuery("");
+        setWardQuery("");
+        if (id) {
+            axios.get(`/api/provinces/${id}/districts`).then(res => setDistricts(res.data));
+        }
+    };
+
+    const handleDistrictChange = (id) => {
+        setSelection(s => ({ ...s, district: id, ward: "" }));
+        setWards([]);
+        setWardQuery("");
+        if (id) {
+            axios.get(`/api/districts/${id}/wards`).then(res => setWards(res.data));
+        }
+    };
+
+    const handleSearch = async () => {
+        setSearching(true);
+        try {
+            const res = await axios.get('/api/search-managers', {
+                params: {
+                    ward_id: selection.ward,
+                    district_id: selection.district,
+                    province_id: selection.province
+                }
+            });
+            setManagers(res.data.managers);
+            setSearched(true);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setSearching(false);
+        }
+    };
+
+    // Filter functions
+    const filteredProvinces = provinceQuery === "" ? provinces : provinces.filter((p) => 
+        p.name.toLowerCase().replace(/\s+/g, "").includes(provinceQuery.toLowerCase().replace(/\s+/g, ""))
+    );
+
+    const filteredDistricts = districtQuery === "" ? districts : districts.filter((d) => 
+        d.name.toLowerCase().replace(/\s+/g, "").includes(districtQuery.toLowerCase().replace(/\s+/g, ""))
+    );
+
+    const filteredWards = wardQuery === "" ? wards : wards.filter((w) => 
+        w.name.toLowerCase().replace(/\s+/g, "").includes(wardQuery.toLowerCase().replace(/\s+/g, ""))
+    );
+
+    const getSelectedItemName = (list, id) => {
+        if (!id) return "";
+        return list.find(item => String(item.id) === String(id))?.name || "";
+    };
+
+    return (
+        <div className="py-24 bg-gradient-to-b from-white to-rose-50/30">
+            <div className="max-w-7xl mx-auto px-4">
+                <div className="bg-white rounded-[3rem] shadow-2xl shadow-rose-100 border border-rose-50 overflow-hidden">
+                    <div className="flex flex-col lg:flex-row">
+                        {/* Search Sidebar */}
+                        <div className="lg:w-1/3 p-10 lg:p-16 bg-rose-600 text-white">
+                            <h2 className="text-3xl font-black mb-6 leading-tight">Bạn cần sự giúp đỡ?</h2>
+                            <p className="text-rose-100 mb-10 font-medium">
+                                Hãy tìm kiếm người quản lý khu vực gần bạn nhất để được hỗ trợ kết nối với cộng đồng.
+                            </p>
+                            
+                            <div className="space-y-6">
+                                {/* Searchable Province */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black uppercase tracking-widest text-rose-200">Tỉnh / Thành phố</label>
+                                    <Combobox value={selection.province} onChange={handleProvinceChange}>
+                                        <div className="relative">
+                                            <ComboboxInput
+                                                className="w-full bg-rose-700/50 border-none rounded-2xl py-4 px-6 text-white font-bold focus:ring-2 focus:ring-white outline-none placeholder-rose-300"
+                                                displayValue={(id) => getSelectedItemName(provinces, id)}
+                                                onChange={(event) => setProvinceQuery(event.target.value)}
+                                                placeholder="Nhập tên Tỉnh..."
+                                            />
+                                            <div className="absolute inset-y-0 right-0 flex items-center pr-4">
+                                                <ChevronDown className="h-5 w-5 text-rose-200" aria-hidden="true" />
+                                            </div>
+                                            <Transition
+                                                as={Fragment}
+                                                leave="transition ease-in duration-100"
+                                                leaveFrom="opacity-100"
+                                                leaveTo="opacity-0"
+                                                afterLeave={() => setProvinceQuery("")}
+                                            >
+                                                <ComboboxOptions className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 shadow-2xl ring-1 ring-black/5 focus:outline-none sm:text-sm">
+                                                    {filteredProvinces.length === 0 && provinceQuery !== "" ? (
+                                                        <div className="relative cursor-default select-none py-2 px-4 text-gray-700 font-bold">Không tìm thấy.</div>
+                                                    ) : (
+                                                        filteredProvinces.map((p) => (
+                                                            <ComboboxOption
+                                                                key={p.id}
+                                                                className={({ focus }) => `relative cursor-default select-none py-3 px-6 ${focus ? "bg-rose-600 text-white" : "text-gray-900"}`}
+                                                                value={p.id}
+                                                            >
+                                                                {({ selected }) => (
+                                                                    <span className={`block truncate ${selected ? "font-black" : "font-medium"}`}>
+                                                                        {p.name}
+                                                                    </span>
+                                                                )}
+                                                            </ComboboxOption>
+                                                        ))
+                                                    )}
+                                                </ComboboxOptions>
+                                            </Transition>
+                                        </div>
+                                    </Combobox>
+                                </div>
+
+                                {/* Searchable District */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black uppercase tracking-widest text-rose-200">Quận / Huyện</label>
+                                    <Combobox value={selection.district} onChange={handleDistrictChange} disabled={!selection.province}>
+                                        <div className="relative">
+                                            <ComboboxInput
+                                                className="w-full bg-rose-700/50 border-none rounded-2xl py-4 px-6 text-white font-bold focus:ring-2 focus:ring-white outline-none placeholder-rose-300 disabled:opacity-50"
+                                                displayValue={(id) => getSelectedItemName(districts, id)}
+                                                onChange={(event) => setDistrictQuery(event.target.value)}
+                                                placeholder={selection.province ? "Nhập tên Huyện..." : "Chọn Tỉnh trước"}
+                                            />
+                                            <div className="absolute inset-y-0 right-0 flex items-center pr-4">
+                                                <ChevronDown className="h-5 w-5 text-rose-200" aria-hidden="true" />
+                                            </div>
+                                            <Transition
+                                                as={Fragment}
+                                                leave="transition ease-in duration-100"
+                                                leaveFrom="opacity-100"
+                                                leaveTo="opacity-0"
+                                                afterLeave={() => setDistrictQuery("")}
+                                            >
+                                                <ComboboxOptions className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 shadow-2xl ring-1 ring-black/5 focus:outline-none sm:text-sm">
+                                                    {filteredDistricts.length === 0 && districtQuery !== "" ? (
+                                                        <div className="relative cursor-default select-none py-2 px-4 text-gray-700 font-bold">Không tìm thấy.</div>
+                                                    ) : (
+                                                        filteredDistricts.map((d) => (
+                                                            <ComboboxOption
+                                                                key={d.id}
+                                                                className={({ focus }) => `relative cursor-default select-none py-3 px-6 ${focus ? "bg-rose-600 text-white" : "text-gray-900"}`}
+                                                                value={d.id}
+                                                            >
+                                                                {({ selected }) => <span className={`block truncate ${selected ? "font-black" : "font-medium"}`}>{d.name}</span>}
+                                                            </ComboboxOption>
+                                                        ))
+                                                    )}
+                                                </ComboboxOptions>
+                                            </Transition>
+                                        </div>
+                                    </Combobox>
+                                </div>
+
+                                {/* Searchable Ward */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black uppercase tracking-widest text-rose-200">Xã / Phường / Thị trấn</label>
+                                    <Combobox value={selection.ward} onChange={(id) => setSelection(s => ({ ...s, ward: id }))} disabled={!selection.district}>
+                                        <div className="relative">
+                                            <ComboboxInput
+                                                className="w-full bg-rose-700/50 border-none rounded-2xl py-4 px-6 text-white font-bold focus:ring-2 focus:ring-white outline-none placeholder-rose-300 disabled:opacity-50"
+                                                displayValue={(id) => getSelectedItemName(wards, id)}
+                                                onChange={(event) => setWardQuery(event.target.value)}
+                                                placeholder={selection.district ? "Nhập tên Xã..." : "Chọn Huyện trước"}
+                                            />
+                                            <div className="absolute inset-y-0 right-0 flex items-center pr-4">
+                                                <ChevronDown className="h-5 w-5 text-rose-200" aria-hidden="true" />
+                                            </div>
+                                            <Transition
+                                                as={Fragment}
+                                                leave="transition ease-in duration-100"
+                                                leaveFrom="opacity-100"
+                                                leaveTo="opacity-0"
+                                                afterLeave={() => setWardQuery("")}
+                                            >
+                                                <ComboboxOptions className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 shadow-2xl ring-1 ring-black/5 focus:outline-none sm:text-sm">
+                                                    {filteredWards.length === 0 && wardQuery !== "" ? (
+                                                        <div className="relative cursor-default select-none py-2 px-4 text-gray-700 font-bold">Không tìm thấy.</div>
+                                                    ) : (
+                                                        filteredWards.map((w) => (
+                                                            <ComboboxOption
+                                                                key={w.id}
+                                                                className={({ focus }) => `relative cursor-default select-none py-3 px-6 ${focus ? "bg-rose-600 text-white" : "text-gray-900"}`}
+                                                                value={w.id}
+                                                            >
+                                                                {({ selected }) => <span className={`block truncate ${selected ? "font-black" : "font-medium"}`}>{w.name}</span>}
+                                                            </ComboboxOption>
+                                                        ))
+                                                    )}
+                                                </ComboboxOptions>
+                                            </Transition>
+                                        </div>
+                                    </Combobox>
+                                </div>
+
+                                <button 
+                                    onClick={handleSearch}
+                                    disabled={!selection.province || searching}
+                                    className="w-full bg-white text-rose-600 hover:bg-rose-50 py-4 rounded-2xl font-black transition-all shadow-xl flex items-center justify-center gap-3 disabled:opacity-50"
+                                >
+                                    {searching ? <Loader2 className="animate-spin" /> : <Search size={20} />}
+                                    Tìm người phụ trách
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Search Results Area */}
+                        <div className="lg:w-2/3 p-10 lg:p-16 relative min-h-[500px] flex flex-col justify-center">
+                            {!searched ? (
+                                <div className="text-center space-y-6">
+                                    <div className="w-24 h-24 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-8">
+                                        <MapIcon size={48} className="animate-pulse" />
+                                    </div>
+                                    <h3 className="text-2xl font-black text-gray-900">Tìm kiếm sự hỗ trợ ngay hôm nay</h3>
+                                    <p className="text-gray-500 max-w-md mx-auto leading-relaxed">
+                                        Vui lòng chọn khu vực của bạn để chúng tôi kết nối bạn với những người quản lý có thể giúp đỡ bạn.
+                                    </p>
+                                </div>
+                            ) : managers.length > 0 ? (
+                                <div className="space-y-8">
+                                    <div className="flex items-center justify-between border-b border-gray-100 pb-6">
+                                        <h3 className="text-2xl font-black text-gray-900 flex items-center gap-3">
+                                            <span className="bg-rose-100 text-rose-600 w-10 h-10 rounded-xl flex items-center justify-center text-lg">{managers.length}</span>
+                                            Người hỗ trợ tìm thấy
+                                        </h3>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto max-h-[500px] pr-2 custom-scrollbar">
+                                        {managers.map(m => (
+                                            <div key={m.id} className="bg-gray-50/50 hover:bg-white p-6 rounded-[2.5rem] border border-gray-100 hover:border-rose-200 transition-all duration-300 group hover:shadow-xl hover:shadow-rose-100/50">
+                                                <div className="flex items-start gap-4 mb-6">
+                                                    <div className="w-16 h-16 rounded-2xl bg-rose-500 flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-rose-200 overflow-hidden">
+                                                        {m.avatar ? <img src={`/storage/${m.avatar}`} className="w-full h-full object-cover" /> : m.name.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-black text-gray-900 text-lg group-hover:text-rose-600 transition-colors">{m.name}</h4>
+                                                        <p className="text-xs font-bold text-rose-500 uppercase tracking-widest">{m.area_name}</p>
+                                                        <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-1"><MapPin size={10} /> {m.location}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    {m.phone && (
+                                                        <a href={`tel:${m.phone}`} className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-gray-100 hover:border-rose-300 transition-colors">
+                                                            <div className="w-8 h-8 bg-green-50 text-green-600 rounded-xl flex items-center justify-center"><Phone size={14} /></div>
+                                                            <span className="text-sm font-bold text-gray-700">{m.phone}</span>
+                                                        </a>
+                                                    )}
+                                                    <a href={`mailto:${m.email}`} className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-gray-100 hover:border-rose-300 transition-colors">
+                                                        <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center"><Mail size={14} /></div>
+                                                        <span className="text-sm font-bold text-gray-700 truncate">{m.email}</span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-center space-y-6">
+                                    <div className="w-24 h-24 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mx-auto mb-8">
+                                        <User size={48} />
+                                    </div>
+                                    <h3 className="text-2xl font-black text-gray-900">Rất tiếc, chưa tìm thấy người phụ trách</h3>
+                                    <p className="text-gray-500 max-w-md mx-auto">
+                                        Khu vực này hiện chưa có người quản lý trực tiếp. Bạn vui lòng liên hệ hotline tổng đài 1900 xxxx để được hỗ trợ.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <style dangerouslySetInnerHTML={{ __html: `
+                .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #fee2e2; border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #fecaca; }
+            `}} />
+        </div>
     );
 }

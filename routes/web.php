@@ -128,6 +128,12 @@ Route::get('/transparency', [TransparencyController::class, 'index'])->name('tra
 Route::get('/news', [NewsController::class, 'index'])->name('news.index');
 Route::get('/news/{news:slug}', [NewsController::class, 'show'])->name('news.show');
 
+// Area Search Routes
+Route::get('/api/search-managers', [\App\Http\Controllers\AreaSearchController::class, 'searchManagers'])->name('api.search-managers');
+Route::get('/api/provinces', [\App\Http\Controllers\AreaSearchController::class, 'getProvinces'])->name('api.provinces');
+Route::get('/api/provinces/{province}/districts', [\App\Http\Controllers\AreaSearchController::class, 'getDistricts'])->name('api.provinces.districts');
+Route::get('/api/districts/{district}/wards', [\App\Http\Controllers\AreaSearchController::class, 'getWards'])->name('api.districts.wards');
+
 // Admin routes
 Route::middleware(['web', 'auth', 'role:admin', 'verified'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
@@ -152,6 +158,11 @@ Route::middleware(['web', 'auth', 'role:admin', 'verified'])->prefix('admin')->n
     Route::post('/news/{id}/restore', [AdminNewsController::class, 'restore'])->name('news.restore');
     Route::delete('/news/{id}/force-delete', [AdminNewsController::class, 'forceDelete'])->name('news.force-delete');
     Route::resource('news', AdminNewsController::class);
+
+    // Area Management
+    Route::resource('areas', \App\Http\Controllers\Admin\AreaController::class);
+    Route::get('provinces/{province}/districts', [\App\Http\Controllers\Admin\AreaController::class, 'getDistricts'])->name('provinces.districts');
+    Route::get('districts/{district}/wards', [\App\Http\Controllers\Admin\AreaController::class, 'getWards'])->name('districts.wards');
 
     // AI API
     Route::post('/api/ai-generate', [\App\Http\Controllers\Admin\AIController::class, 'generate'])->name('api.ai-generate');

@@ -8,6 +8,7 @@ export default function Edit({ mustVerifyEmail, status, donations = [] }) {
     const { data: profileData, setData: setProfileData, post, processing: profileProcessing, errors: profileErrors } = useForm({
         name: user.name,
         email: user.email,
+        phone: user.phone || '',
         avatar: null,
         _method: 'PATCH',
     });
@@ -144,6 +145,18 @@ export default function Edit({ mustVerifyEmail, status, donations = [] }) {
                                         className="w-full bg-gray-50 border-2 border-gray-50 focus:border-rose-400 focus:ring-8 focus:ring-rose-500/5 rounded-2xl py-4 px-6 font-bold text-gray-900 transition-all"
                                     />
                                     {profileErrors.name && <p className="text-red-500 text-[10px] font-black uppercase tracking-widest ml-2">{profileErrors.name}</p>}
+                                </div>
+                                
+                                <div className="space-y-1.5 ml-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Số điện thoại</label>
+                                    <input 
+                                        type="text" 
+                                        value={profileData.phone}
+                                        onChange={e => setProfileData('phone', e.target.value)}
+                                        placeholder="Ví dụ: 0912345678"
+                                        className="w-full bg-gray-50 border-2 border-gray-50 focus:border-rose-400 focus:ring-8 focus:ring-rose-500/5 rounded-2xl py-4 px-6 font-bold text-gray-900 transition-all"
+                                    />
+                                    {profileErrors.phone && <p className="text-red-500 text-[10px] font-black uppercase tracking-widest ml-2">{profileErrors.phone}</p>}
                                 </div>
 
                                 <div className="space-y-1.5 ml-2">

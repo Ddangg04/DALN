@@ -19,6 +19,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'roles',
         'google_id',
         'avatar',
+        'phone',
     ];
 
     protected $hidden = [
@@ -33,5 +34,12 @@ class User extends Authenticatable implements MustVerifyEmail
     public function donations()
     {
         return $this->hasMany(Donation::class);
+    }
+
+    public function activityAreas()
+    {
+        return $this->belongsToMany(ActivityArea::class, 'user_activity_area')
+            ->withPivot('is_active')
+            ->withTimestamps();
     }
 }

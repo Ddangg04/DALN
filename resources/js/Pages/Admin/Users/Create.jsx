@@ -32,7 +32,8 @@ export default function CreateUser({ roles }) {
             user: "Người dùng (Cơ bản)",
             donor: "Nhà hảo tâm",
             volunteer: "Tình nguyện viên",
-            requester: "Người kêu gọi"
+            requester: "Người kêu gọi",
+            area_manager: "Quản lý khu vực"
         };
         return map[r] || r;
     };
@@ -132,7 +133,7 @@ export default function CreateUser({ roles }) {
                                             onChange={() => handleRoleToggle(role)}
                                             className="w-5 h-5 text-rose-600 border-gray-300 rounded focus:ring-rose-500"
                                         />
-                                        <span className="ml-3 font-medium text-gray-800 capitalize">
+                                        <span className="ml-3 font-medium text-gray-800">
                                             {translateRole(role)}
                                         </span>
                                     </label>

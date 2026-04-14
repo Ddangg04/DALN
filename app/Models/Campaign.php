@@ -24,4 +24,9 @@ class Campaign extends Model
     {
         return $this->hasMany(Statement::class);
     }
+
+    public function activityAreas()
+    {
+        return $this->belongsToMany(ActivityArea::class, 'campaign_activity_area');
+    }
 }

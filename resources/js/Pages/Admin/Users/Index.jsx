@@ -34,7 +34,8 @@ export default function UsersIndex({ users, roles, filters }) {
             user: "Người dùng",
             donor: "Nhà hảo tâm",
             volunteer: "Tình nguyện viên",
-            requester: "Người kêu gọi"
+            requester: "Người kêu gọi",
+            area_manager: "Quản lý khu vực"
         };
         return map[r] || r;
     };

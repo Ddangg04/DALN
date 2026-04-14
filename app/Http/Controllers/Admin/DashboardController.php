@@ -14,17 +14,58 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // ========== USER STATISTICS BY ROLE ==========
+        // ========== BASIC STATISTICS ==========
+        $totalUsers = User::count();
         $adminCount = User::role('admin')->count();
         $donorCount = User::role('donor')->count();
         $volunteerCount = User::role('volunteer')->count();
         $requesterCount = User::role('requester')->count();
-        $totalUsers = User::count();
+        $managerCount = User::role('area_manager')->count();
 
-        // ========== CHARITY STATISTICS ==========
         $totalCampaigns = Campaign::count();
-        $totalDonations = Donation::count();
+        $totalDonationsCount = Donation::count();
+        $totalRaised = Campaign::sum('raised_amount');
         $totalNews = News::count();
+
+        // ========== DONATION TREND (Last 15 days) ==========
+        $donationTrend = Donation::select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('SUM(amount) as total')
+            )
+            ->where('created_at', '>=', now()->subDays(15))
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        // ========== TOP CAMPAIGNS ==========
+        $topCampaigns = Campaign::orderByDesc('raised_amount')
+            ->take(5)
+            ->get()
+            ->map(function($c) {
+                return [
+                    'id' => $c->id,
+                    'title' => $c->title,
+                    'raised' => (float)$c->raised_amount,
+                    'target' => (float)$c->target_amount,
+                    'progress' => $c->target_amount > 0 ? round(($c->raised_amount / $c->target_amount) * 100, 1) : 0,
+                ];
+            });
+
+        // ========== RECENT DONATIONS ==========
+        $recentDonations = Donation::with(['user', 'campaign'])
+            ->orderByDesc('created_at')
+            ->take(6)
+            ->get()
+            ->map(function($d) {
+                return [
+                    'id' => $d->id,
+                    'donor' => $d->donor_name ?: ($d->user ? $d->user->name : 'Ẩn danh'),
+                    'campaign' => $d->campaign ? $d->campaign->title : 'Chiến dịch đã xóa',
+                    'amount' => (float)$d->amount,
+                    'time' => $d->created_at->diffForHumans(),
+                    'method' => $d->payment_method,
+                ];
+            });
 
         return Inertia::render('Admin/Dashboard', [
             'stats' => [
@@ -33,11 +74,15 @@ class DashboardController extends Controller
                 'donors' => $donorCount,
                 'volunteers' => $volunteerCount,
                 'requesters' => $requesterCount,
-                
+                'managers' => $managerCount,
                 'campaigns' => $totalCampaigns,
-                'donations' => $totalDonations,
+                'donations' => $totalDonationsCount,
+                'total_raised' => (float)$totalRaised,
                 'news' => $totalNews,
             ],
+            'donationTrend' => $donationTrend,
+            'topCampaigns' => $topCampaigns,
+            'recentDonations' => $recentDonations,
             'recentUsers' => User::orderByDesc('created_at')->take(5)->get(),
         ]);
     }

@@ -35,14 +35,16 @@ class ProfileController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,' . Auth::id()],
+            'phone' => ['nullable', 'string', 'max:15'],
             'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
         ]);
 
         $user = $request->user();
         
-        // Explicitly update name and email
+        // Explicitly update name, email, and phone
         $user->name = $request->name;
         $user->email = $request->email;
+        $user->phone = $request->phone;
 
         if ($request->hasFile('avatar')) {
             // Delete old avatar if it exists and is a local file
