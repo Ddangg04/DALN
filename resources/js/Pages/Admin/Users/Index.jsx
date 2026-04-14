@@ -2,7 +2,7 @@ import { Head, Link, router } from "@inertiajs/react";
 import { useState } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
-export default function UsersIndex({ users, filters }) {
+export default function UsersIndex({ users, roles, filters }) {
     const [search, setSearch] = useState(filters.search || "");
     const [role, setRole] = useState(filters.role || "");
 
@@ -27,23 +27,46 @@ export default function UsersIndex({ users, filters }) {
         }
     };
 
+    // Helper functions
+    const translateRole = (r) => {
+        const map = {
+            admin: "Quản trị viên",
+            user: "Người dùng",
+            donor: "Nhà hảo tâm",
+            volunteer: "Tình nguyện viên",
+            requester: "Người kêu gọi"
+        };
+        return map[r] || r;
+    };
+
+    const getRoleColor = (r) => {
+        const map = {
+            admin: "bg-purple-100 text-purple-800",
+            user: "bg-gray-100 text-gray-800",
+            donor: "bg-rose-100 text-rose-800",
+            volunteer: "bg-green-100 text-green-800",
+            requester: "bg-orange-100 text-orange-800"
+        };
+        return map[r] || "bg-blue-100 text-blue-800";
+    };
+
     return (
         <AuthenticatedLayout
             header={
                 <div className="flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-gray-800">
-                        Quản lý Người dùng
+                        👥 Quản lý Người dùng
                     </h2>
                     <Link
                         href={route("admin.users.create")}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                        className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow"
                     >
                         + Thêm người dùng
                     </Link>
                 </div>
             }
         >
-            <Head title="Quản lý người dùng" />
+            <Head title="Quản trị người dùng" />
 
             {/* Filters */}
             <div className="bg-white rounded-lg shadow mb-6">
@@ -57,8 +80,8 @@ export default function UsersIndex({ users, filters }) {
                                 type="text"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Tên, email, mã số..."
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Tên, email..."
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                             />
                         </div>
 
@@ -69,21 +92,21 @@ export default function UsersIndex({ users, filters }) {
                             <select
                                 value={role}
                                 onChange={(e) => setRole(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                             >
-                                <option value="">Tất cả</option>
-                                <option value="admin">Admin</option>
-                                <option value="teacher">Giảng viên</option>
-                                <option value="student">Sinh viên</option>
+                                <option value="">Tất cả vai trò</option>
+                                {roles && roles.map(r => (
+                                    <option key={r} value={r}>{translateRole(r)}</option>
+                                ))}
                             </select>
                         </div>
 
                         <div className="flex items-end">
                             <button
                                 type="submit"
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                                className="w-full bg-gray-800 hover:bg-gray-900 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow"
                             >
-                                Tìm kiếm
+                                Lọc kết quả
                             </button>
                         </div>
                     </div>
@@ -97,19 +120,16 @@ export default function UsersIndex({ users, filters }) {
                         <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Người dùng
+                                    Thành viên
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Mã số
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Vai trò
+                                    Vai trò (Spatie)
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Trạng thái
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Ngày tạo
+                                    Ngày tham gia
                                 </th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Thao tác
@@ -122,10 +142,8 @@ export default function UsersIndex({ users, filters }) {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             <div className="flex-shrink-0 h-10 w-10">
-                                                <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
-                                                    {user.name
-                                                        .charAt(0)
-                                                        .toUpperCase()}
+                                                <div className="h-10 w-10 rounded-full bg-rose-500 flex items-center justify-center text-white font-bold shadow">
+                                                    {user.name.charAt(0).toUpperCase()}
                                                 </div>
                                             </div>
                                             <div className="ml-4">
@@ -138,108 +156,63 @@ export default function UsersIndex({ users, filters }) {
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900">
-                                            {user.user_code}
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-wrap gap-1">
+                                            {user.roles && user.roles.length > 0 ? (
+                                                user.roles.map(r => (
+                                                    <span
+                                                        key={r.id}
+                                                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleColor(r.name)}`}
+                                                    >
+                                                        {translateRole(r.name)}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className="text-gray-400 text-xs italic">Chưa có vai trò</span>
+                                            )}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span
                                             className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                user.role === "admin"
-                                                    ? "bg-purple-100 text-purple-800"
-                                                    : user.role === "teacher"
-                                                    ? "bg-green-100 text-green-800"
-                                                    : "bg-blue-100 text-blue-800"
-                                            }`}
-                                        >
-                                            {user.role === "admin"
-                                                ? "Admin"
-                                                : user.role === "teacher"
-                                                ? "Giảng viên"
-                                                : "Sinh viên"}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span
-                                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                user.is_active
+                                                user.is_active !== 0
                                                     ? "bg-green-100 text-green-800"
                                                     : "bg-red-100 text-red-800"
                                             }`}
                                         >
-                                            {user.is_active
-                                                ? "Hoạt động"
-                                                : "Vô hiệu hóa"}
+                                            {user.is_active !== 0 ? "Hoạt động" : "Bị khóa"}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {new Date(
-                                            user.created_at
-                                        ).toLocaleDateString("vi-VN")}
+                                        {new Date(user.created_at).toLocaleDateString("vi-VN")}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div className="flex justify-end space-x-2">
+                                        <div className="flex justify-end space-x-3">
                                             <Link
-                                                href={route(
-                                                    "admin.users.edit",
-                                                    user.id
-                                                )}
+                                                href={route("admin.users.edit", user.id)}
                                                 className="text-blue-600 hover:text-blue-900"
+                                                title="Sửa thông tin"
                                             >
-                                                <svg
-                                                    className="w-5 h-5"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                                    />
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                 </svg>
                                             </Link>
                                             <button
-                                                onClick={() =>
-                                                    handleResetPassword(user.id)
-                                                }
+                                                onClick={() => handleResetPassword(user.id)}
                                                 className="text-yellow-600 hover:text-yellow-900"
                                                 title="Reset mật khẩu"
                                             >
-                                                <svg
-                                                    className="w-5 h-5"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                                                    />
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                                                 </svg>
                                             </button>
                                             <button
-                                                onClick={() =>
-                                                    handleDelete(user.id)
-                                                }
+                                                onClick={() => handleDelete(user.id)}
                                                 className="text-red-600 hover:text-red-900"
+                                                title="Xóa tài khoản"
                                             >
-                                                <svg
-                                                    className="w-5 h-5"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                                    />
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                 </svg>
                                             </button>
                                         </div>
@@ -255,38 +228,16 @@ export default function UsersIndex({ users, filters }) {
                     <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
                         <div className="flex-1 flex justify-between sm:hidden">
                             {users.prev_page_url && (
-                                <Link
-                                    href={users.prev_page_url}
-                                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                                >
-                                    Trước
-                                </Link>
+                                <Link href={users.prev_page_url} className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Trước</Link>
                             )}
                             {users.next_page_url && (
-                                <Link
-                                    href={users.next_page_url}
-                                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                                >
-                                    Sau
-                                </Link>
+                                <Link href={users.next_page_url} className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Sau</Link>
                             )}
                         </div>
                         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                             <div>
                                 <p className="text-sm text-gray-700">
-                                    Hiển thị{" "}
-                                    <span className="font-medium">
-                                        {users.from}
-                                    </span>{" "}
-                                    đến{" "}
-                                    <span className="font-medium">
-                                        {users.to}
-                                    </span>{" "}
-                                    trong tổng số{" "}
-                                    <span className="font-medium">
-                                        {users.total}
-                                    </span>{" "}
-                                    kết quả
+                                    Hiển thị <span className="font-medium">{users.from}</span> đến <span className="font-medium">{users.to}</span> trong tổng số <span className="font-medium">{users.total}</span> kết quả
                                 </p>
                             </div>
                             <div>
@@ -296,21 +247,9 @@ export default function UsersIndex({ users, filters }) {
                                             key={index}
                                             href={link.url || "#"}
                                             className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                                                link.active
-                                                    ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                                                    : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                                            } ${
-                                                index === 0
-                                                    ? "rounded-l-md"
-                                                    : ""
-                                            } ${
-                                                index === users.links.length - 1
-                                                    ? "rounded-r-md"
-                                                    : ""
-                                            }`}
-                                            dangerouslySetInnerHTML={{
-                                                __html: link.label,
-                                            }}
+                                                link.active ? "z-10 bg-rose-50 border-rose-500 text-rose-600" : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                                            } ${index === 0 ? "rounded-l-md" : ""} ${index === users.links.length - 1 ? "rounded-r-md" : ""}`}
+                                            dangerouslySetInnerHTML={{ __html: link.label }}
                                         />
                                     ))}
                                 </nav>

@@ -29,26 +29,25 @@ class GoogleController extends Controller
             // Lấy email người dùng
             $email = $googleUser->getEmail();
 
-            // ✅ Chỉ cho phép email @st.phenikaa-uni.edu.vn
-            if (!Str::endsWith($email, '@st.phenikaa-uni.edu.vn')) {
-                return redirect()->route('login')->withErrors([
-                    'email' => 'Chỉ chấp nhận tài khoản email trường (@st.phenikaa-uni.edu.vn).',
-                ]);
-            }
-
             // Tìm hoặc tạo user mới
             $user = User::firstOrCreate(
                 ['email' => $email],
                 [
                     'name' => $googleUser->getName(),
                     'password' => bcrypt(Str::random(16)), // tạo mật khẩu random
+                    'email_verified_at' => now(), // Tự động xác thực vì Google đã xác nhận
                 ]
             );
+
+            // Đảm bảo user cũ cũng được verify nếu login qua Google
+            if (!$user->email_verified_at) {
+                $user->update(['email_verified_at' => now()]);
+            }
 
             // Đăng nhập
             Auth::login($user);
 
-            return redirect()->route('student.dashboard');
+            return redirect()->route('home');
         } catch (\Exception $e) {
             return redirect()->route('login')->withErrors([
                 'email' => 'Đăng nhập Google thất bại. Vui lòng thử lại.',

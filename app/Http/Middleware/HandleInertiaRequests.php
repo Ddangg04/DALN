@@ -77,17 +77,14 @@ class HandleInertiaRequests extends Middleware
             // Chuẩn hóa role chính (string) — lấy phần tử đầu tiên nếu có
             $primaryRole = $roles[0] ?? null;
 
-            // Build object user được chia cho client (bảo mật: không trả password, remember_token, v.v.)
+            // Build object user được chia cho client
             $sharedUser = [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $primaryRole,
-                'roles' => $roles,
-                // thêm thuộc tính boolean hữu ích
+                'roles' => array_map(fn($r) => ['name' => $r], $roles),
                 'is_active' => $user->is_active ?? true,
-                // nếu muốn thêm avatar hay thông tin khác, thêm ở đây
-                // 'avatar' => $user->avatar_url ?? null,
             ];
         }
 

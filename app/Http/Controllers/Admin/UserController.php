@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
-use App\Mail\TemporaryPasswordMail; // sẽ tạo phía dưới
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
+
 class UserController extends Controller
 {
     public function index(Request $request)
@@ -60,9 +60,11 @@ class UserController extends Controller
 
         if (!empty($data['roles'])) {
             $user->syncRoles($data['roles']);
+        } else {
+            $user->assignRole('user');
         }
 
-        return redirect()->route('admin.users.index')->with('success','Tạo tài khoản thành công.');
+        return redirect()->route('admin.users.index')->with('success','Thêm người dùng thành công.');
     }
 
     public function edit(User $user)
@@ -75,45 +77,41 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $availableRoles = Role::pluck('name')->toArray();
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required','email','max:255', Rule::unique('users','email')->ignore($user->id)],
             'roles' => ['nullable','array'],
-            'roles.*' => ['string', Rule::in(Role::pluck('name')->toArray())],
+            'roles.*' => ['string', Rule::in($availableRoles)],
+            'phone' => ['nullable','string','max:30'],
+            'address' => ['nullable','string','max:1000'],
+            'is_active' => ['nullable','boolean'],
         ]);
 
         $user->update([
             'name' => $data['name'],
             'email' => $data['email'],
+            'phone' => $data['phone'] ?? $user->phone,
+            'address' => $data['address'] ?? $user->address,
+            'is_active' => $data['is_active'] ?? $user->is_active,
         ]);
 
-        $user->syncRoles($data['roles'] ?? []);
+        if (!empty($data['roles'])) {
+            $user->syncRoles($data['roles']);
+        }
 
-        return redirect()->route('admin.users.index')->with('success','Cập nhật tài khoản thành công.');
+        return redirect()->route('admin.users.index')->with('success','Cập nhật người dùng thành công.');
     }
 
     public function destroy(User $user)
     {
-        // prevent deleting self
         if (Auth::id() === $user->id) {
             return back()->with('error','Bạn không thể xoá chính mình.');
         }
 
         $user->delete();
         return redirect()->route('admin.users.index')->with('success','Xoá tài khoản thành công.');
-    }
-
-    public function resetPassword(User $user)
-    {
-        // generate temporary password
-        $temp = Str::random(10) . 'aA1'; // ensure complexity
-        $user->password = Hash::make($temp);
-        $user->save();
-
-        // send email with temporary password (you can customize)
-        Mail::to($user->email)->send(new TemporaryPasswordMail($user, $temp));
-
-        return back()->with('success','Đã đặt lại mật khẩu và gửi email cho người dùng.');
     }
 
     public function assignRoles(Request $request, User $user)

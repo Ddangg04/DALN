@@ -122,22 +122,14 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
-        // mapping role -> route name (tùy bạn có thể mở rộng)
         $map = [
             'admin' => 'admin.dashboard',
             'administrator' => 'admin.dashboard',
 
-            'teacher' => 'teacher.dashboard',
-            'giang-vien' => 'teacher.dashboard',
-            'giangvien' => 'teacher.dashboard',
-            'chu-nhiem' => 'teacher.dashboard',
-            'pho-truong-khoa' => 'teacher.dashboard',
-            'truong-khoa' => 'teacher.dashboard',
-
-            'student' => 'student.dashboard',
-            'sinh-vien' => 'student.dashboard',
-            'sinhvien' => 'student.dashboard',
-            'lop-truong' => 'student.dashboard',
+            'user' => 'home',
+            'donor' => 'home',
+            'volunteer' => 'home',
+            'requester' => 'home',
         ];
 
         $routeName = $map[$role] ?? null;
@@ -150,9 +142,7 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
-        // Nếu user có intended (bị chặn bởi auth middleware trước đó) -> redirect intended
-        // Nếu không -> tới dashboard tương ứng
-        return redirect()->intended(route($routeName))->with('success', 'Chào mừng ' . $user->name);
+        return redirect()->intended(route($routeName));
     }
 
     /**

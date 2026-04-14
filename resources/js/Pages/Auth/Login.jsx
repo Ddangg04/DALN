@@ -1,8 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Head, Link, useForm } from "@inertiajs/react";
 
-export default function Welcome({ auth }) {
+export default function Login({ auth }) {
     const [showPassword, setShowPassword] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    useEffect(() => {
+        setIsLoaded(true);
+    }, []);
 
     const { data, setData, post, processing, errors } = useForm({
         email: "",
@@ -16,313 +21,159 @@ export default function Welcome({ auth }) {
     };
 
     return (
-        <>
-            <Head title="Trang chủ">
-                <link rel="preconnect" href="https://fonts.googleapis.com" />
-                <link
-                    rel="preconnect"
-                    href="https://fonts.gstatic.com"
-                    crossOrigin="anonymous"
-                />
-                <link
-                    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-                    rel="stylesheet"
-                />
-            </Head>
+        <div className="min-h-screen bg-gray-50 flex overflow-hidden font-sans">
+            <Head title="Đăng nhập - VNHeart Charity" />
 
-            <style>{`
-                * {
-                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                }
-            `}</style>
+            {/* Background Blobs for Atmosphere */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-rose-200/30 rounded-full blur-[120px] animate-pulse"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-100/30 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+            </div>
 
-            <div className="min-h-screen flex">
-                {/* Left Side - Hero Section with Background */}
-                <div
-                    className="flex-1 relative bg-cover bg-center bg-no-repeat"
-                    style={{
-                        backgroundImage:
-                            "linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('https://images.unsplash.com/photo-1503676260728-1c00da094a0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2022&q=80')",
-                    }}
-                >
-                    {/* Logo and Brand */}
-                    <div className="absolute top-6 left-6 flex items-center">
-                        <div className="w-16 h-16 bg-blue-700 rounded-full flex items-center justify-center border-4 border-white shadow-lg mr-3">
-                            <div className="text-white">
-                                <svg
-                                    className="w-8 h-8"
-                                    fill="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" />
-                                </svg>
-                            </div>
+            <div className="flex-1 flex flex-col lg:flex-row relative z-10 w-full overflow-y-auto">
+                {/* Left Side: Visual Inspiration (60% on Desktop) */}
+                <div className="hidden lg:flex lg:w-[60%] relative overflow-hidden bg-gray-900">
+                    <img 
+                        src="/images/auth/login_hero.png" 
+                        alt="VNHeart Inspiration" 
+                        className={`w-full h-full object-cover transition-all duration-1000 ease-out ${isLoaded ? 'opacity-70 scale-100' : 'opacity-0 scale-110'}`}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                    
+                    {/* Floating Branding Overlay */}
+                    <div className="absolute top-12 left-12 flex items-center space-x-4 animate-fade-in">
+                        <div className="w-14 h-14 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20 shadow-2xl">
+                            <span className="text-white text-3xl font-black">♥</span>
                         </div>
-                        <span className="text-white text-2xl font-bold tracking-wide">
-                            ĐẠI HỌC PHENIKAA LMS
-                        </span>
+                        <span className="text-white text-3xl font-black tracking-tighter">VNHeart</span>
                     </div>
 
-                    {/* Main Content */}
-                    <div className="flex items-center justify-start h-full pl-12 pr-16">
-                        <div className="max-w-2xl">
-                            <div className="mb-6">
-                                <p className="text-orange-400 font-bold text-lg tracking-wide uppercase mb-4">
-                                    HỆ THỐNG QUẢN LÍ HỌC TẬP TRỰC TUYẾN
-                                </p>
+                    <div className={`absolute bottom-20 left-16 max-w-xl transition-all duration-1000 delay-300 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+                        <p className="text-rose-400 font-black uppercase tracking-[0.4em] text-xs mb-4">Mỗi tấm lòng - Một hy vọng</p>
+                        <h2 className="text-5xl lg:text-7xl font-black text-white leading-tight mb-8">Kết nối những <br/><span className="bg-clip-text text-transparent bg-gradient-to-r from-rose-400 to-red-500">trái tim vàng</span></h2>
+                        <div className="flex items-center space-x-6 text-white/60">
+                            <div className="flex -space-x-3">
+                                {[1,2,3,4].map(i => (
+                                    <div key={i} className="w-10 h-10 rounded-full border-2 border-white/10 bg-gray-800 flex items-center justify-center text-[10px] font-bold">👤</div>
+                                ))}
                             </div>
-                            <h1 className="text-7xl font-black text-white mb-6 leading-tight tracking-tight">
-                                TRƯỜNG CÔNG NGHỆ THÔNG TIN
-                                <br />
-                                ĐẠI HỌC PHENIKAA
-                            </h1>
+                            <p className="text-sm font-bold italic">Cùng 12,000+ thành viên tham gia thiện nguyện</p>
                         </div>
-                    </div>
-
-                    {/* Footer Copyright */}
-                    <div className="absolute bottom-6 left-6">
-                        <p className="text-white text-sm">
-                            Copyright@2025 Đại Học PHENIKAA
-                        </p>
                     </div>
                 </div>
 
-                {/* Right Side - Login Form */}
-                <div className="w-96 bg-white shadow-2xl flex flex-col">
-                    {/* Header */}
-                    <div className="p-6 bg-white">
-                        <div className="flex items-center justify-center mb-6">
-                            <div className="w-14 h-14 bg-blue-700 rounded-full flex items-center justify-center border-2 border-blue-800 mr-3">
-                                <svg
-                                    className="w-7 h-7 text-white"
-                                    fill="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <div className="text-xs text-gray-600 uppercase tracking-wider font-medium">
-                                    TRƯỜNG CÔNG NGHỆ THÔNG TIN PHENIKAA
-                                </div>
-                                <div className="text-red-600 font-bold text-sm tracking-wide">
-                                    HỆ THỐNG QUẢN LÍ HỌC TẬP TRỰC TUYẾN
-                                </div>
+                {/* Right Side: Login Form (40% on Desktop, 100% on Mobile) */}
+                <div className="flex-1 lg:w-[40%] flex items-center justify-center p-6 lg:p-16">
+                    <div className={`w-full max-w-md transition-all duration-800 delay-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+                        {/* Mobile Logo */}
+                        <div className="lg:hidden flex justify-center mb-10">
+                            <div className="text-center">
+                                <span className="text-4xl font-black text-rose-600">VNHeart</span>
+                                <div className="h-1 w-12 bg-rose-600 mx-auto mt-2 rounded-full"></div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Login Form */}
-                    <div className="flex-1 px-6 pb-6 overflow-y-auto">
-                        <form onSubmit={submit} className="space-y-4">
-                            {/* Email Field */}
-                            <div>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg
-                                            className="h-5 w-5 text-gray-400"
-                                            fill="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                                        </svg>
+                        <div className="bg-white/70 backdrop-blur-3xl rounded-[3rem] shadow-[0_32px_80px_-20px_rgba(0,0,0,0.1)] border border-white p-10 lg:p-12">
+                            <h3 className="text-3xl font-black text-gray-900 mb-2 leading-none">Chào mừng trở lại</h3>
+                            <p className="text-gray-400 font-bold text-sm mb-10 uppercase tracking-widest">Đăng nhập để tiếp tục</p>
+
+                            <form onSubmit={submit} className="space-y-6">
+                                {/* Email Field */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Tài khoản / Email</label>
+                                    <div className="relative group">
+                                        <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none text-gray-400 group-focus-within:text-rose-500 transition-colors">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={data.email}
+                                            onChange={(e) => setData("email", e.target.value)}
+                                            className={`w-full bg-gray-50/50 border-2 ${errors.email ? 'border-red-200' : 'border-gray-50'} focus:border-rose-400 focus:ring-8 focus:ring-rose-500/10 rounded-2xl py-4 pl-14 pr-6 font-bold text-gray-900 transition-all placeholder:text-gray-300`}
+                                            placeholder="anhdang@example.com"
+                                            autoFocus
+                                        />
                                     </div>
-                                    <input
-                                        id="email"
-                                        type="text"
-                                        name="email"
-                                        value={data.email}
-                                        onChange={(e) =>
-                                            setData("email", e.target.value)
-                                        }
-                                        className={`block w-full pl-10 pr-3 py-3 border ${
-                                            errors.email
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm`}
-                                        placeholder="Tên tài khoản / email"
-                                        autoFocus
-                                    />
+                                    {errors.email && <p className="text-red-500 text-[10px] font-black uppercase tracking-wider ml-4 mt-2">⚠️ {errors.email}</p>}
                                 </div>
-                                {errors.email && (
-                                    <p className="mt-1 text-xs text-red-600">
-                                        {errors.email}
-                                    </p>
-                                )}
-                            </div>
 
-                            {/* Password Field */}
-                            <div>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg
-                                            className="h-5 w-5 text-gray-400"
-                                            fill="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path d="M18,8h-1V6c0-2.76-2.24-5-5-5S7,3.24,7,6v2H6c-1.1,0-2,0.9-2,2v10c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2V10C20,8.9,19.1,8,18,8z M12,17c-1.1,0-2-0.9-2-2s0.9-2,2-2s2,0.9,2,2S13.1,17,12,17z M15.1,8H8.9V6c0-1.71,1.39-3.1,3.1-3.1s3.1,1.39,3.1,3.1V8z" />
-                                        </svg>
+                                {/* Password Field */}
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center ml-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Mật khẩu</label>
+                                        <Link href={route("password.request")} className="text-[10px] font-black text-rose-500 hover:text-rose-600 uppercase tracking-wider transition">Quên?</Link>
                                     </div>
-                                    <input
-                                        id="password"
-                                        type={
-                                            showPassword ? "text" : "password"
-                                        }
-                                        name="password"
-                                        value={data.password}
-                                        onChange={(e) =>
-                                            setData("password", e.target.value)
-                                        }
-                                        className={`block w-full pl-10 pr-10 py-3 border ${
-                                            errors.password
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm`}
-                                        placeholder="Mật khẩu"
-                                    />
-                                    <button
-                                        type="button"
-                                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                                        onClick={() =>
-                                            setShowPassword(!showPassword)
-                                        }
-                                    >
-                                        <svg
-                                            className="h-5 w-5 text-gray-400 hover:text-gray-600"
-                                            fill="currentColor"
-                                            viewBox="0 0 24 24"
+                                    <div className="relative group">
+                                        <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none text-gray-400 group-focus-within:text-rose-500 transition-colors">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                        </div>
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            value={data.password}
+                                            onChange={(e) => setData("password", e.target.value)}
+                                            className={`w-full bg-gray-50/50 border-2 ${errors.password ? 'border-red-200' : 'border-gray-50'} focus:border-rose-400 focus:ring-8 focus:ring-rose-500/10 rounded-2xl py-4 pl-14 pr-14 font-bold text-gray-900 transition-all placeholder:text-gray-300`}
+                                            placeholder="••••••••"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute inset-y-0 right-6 flex items-center text-gray-300 hover:text-rose-500 transition-colors"
                                         >
-                                            {showPassword ? (
-                                                <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
-                                            ) : (
-                                                <path d="M11.83,9L15,12.16C15,12.11 15,12.05 15,12A3,3 0 0,0 12,9C11.94,9 11.89,9 11.83,9M7.53,9.8L9.08,11.35C9.03,11.56 9,11.77 9,12A3,3 0 0,0 12,15C12.22,15 12.44,14.97 12.65,14.92L14.2,16.47C13.53,16.8 12.79,17 12,17A5,5 0 0,1 7,12C7,11.21 7.2,10.47 7.53,9.8M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.09L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.35C10.74,7.13 11.35,7 12,7Z" />
-                                            )}
-                                        </svg>
-                                    </button>
+                                            {showPassword ? <span className="text-xl">👁️</span> : <span className="text-xl">🔒</span>}
+                                        </button>
+                                    </div>
+                                    {errors.password && <p className="text-red-500 text-[10px] font-black uppercase tracking-wider ml-4 mt-2">⚠️ {errors.password}</p>}
                                 </div>
-                                {errors.password && (
-                                    <p className="mt-1 text-xs text-red-600">
-                                        {errors.password}
-                                    </p>
-                                )}
-                            </div>
 
-                            {/* Forgot Password */}
-                            <div className="text-right">
-                                <Link
-                                    href={route("password.request")}
-                                    className="text-xs text-gray-600 hover:text-blue-600"
-                                >
-                                    Bạn quên tên đăng nhập hoặc mật khẩu?
-                                </Link>
-                            </div>
+                                {/* Remember Me */}
+                                <label className="flex items-center cursor-pointer group select-none ml-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={data.remember}
+                                        onChange={(e) => setData("remember", e.target.checked)}
+                                        className="w-5 h-5 text-rose-600 rounded-lg border-gray-200 focus:ring-rose-500 transition"
+                                    />
+                                    <span className="ml-3 text-xs font-bold text-gray-500 group-hover:text-rose-600 transition">Duy trì đăng nhập</span>
+                                </label>
 
-                            {/* Login Button */}
-                            <div>
+                                {/* Submit Button */}
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full py-5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-black rounded-2xl shadow-xl shadow-rose-100 hover:shadow-rose-400/30 transition-all active:scale-95 disabled:opacity-50 uppercase tracking-[0.3em] text-sm"
                                 >
-                                    {processing
-                                        ? "Đang đăng nhập..."
-                                        : "Đăng nhập"}
+                                    {processing ? "⏳ Đang kết nối..." : "Đăng nhập ngay"}
                                 </button>
-                            </div>
 
-                            {/* Remember Me */}
-                            <div className="flex items-center">
-                                <input
-                                    id="remember"
-                                    name="remember"
-                                    type="checkbox"
-                                    checked={data.remember}
-                                    onChange={(e) =>
-                                        setData("remember", e.target.checked)
-                                    }
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                />
-                                <label
-                                    htmlFor="remember"
-                                    className="ml-2 text-sm text-gray-600"
-                                >
-                                    Nhớ tên tài khoản
-                                </label>
-                            </div>
-                        </form>
-
-                        {/* Register Section */}
-                        <div className="mt-6 pt-6 border-t border-gray-200">
-                            <p className="text-center text-sm text-gray-600 mb-3">
-                                Chưa có tài khoản?
-                            </p>
-                            <Link
-                                href={route("register")}
-                                className="w-full flex justify-center py-3 px-4 border border-blue-600 text-sm font-bold rounded text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-                            >
-                                Đăng ký tài khoản
-                            </Link>
-                        </div>
-
-                        {/* Divider */}
-                        <div className="mt-6 mb-4">
-                            <div className="relative">
-                                <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-gray-300"></div>
+                                {/* Google Login */}
+                                <div className="space-y-4 pt-4">
+                                    <div className="relative">
+                                        <div className="absolute inset-0 flex items-center px-6"><div className="w-full border-t border-gray-100"></div></div>
+                                        <div className="relative flex justify-center"><span className="bg-white/70 backdrop-blur px-4 text-[9px] font-black text-gray-300 uppercase tracking-[0.3em]">Hoặc với</span></div>
+                                    </div>
+                                    <a
+                                        href={route("auth.google")}
+                                        className="w-full flex items-center justify-center gap-4 py-4 border-2 border-gray-50 rounded-2xl hover:bg-gray-50 transition-all group"
+                                    >
+                                        <svg className="w-5 h-5 group-hover:scale-110 transition" viewBox="0 0 24 24"><path d="M21.35 11.1h-9.17v2.92h5.37c-.23 1.24-.92 2.29-1.97 2.99v2.49h3.18c1.86-1.71 2.93-4.24 2.93-7.24 0-.7-.06-1.37-.17-2.02z" fill="#EA4335"/><path d="M12.18 22c2.66 0 4.89-.88 6.52-2.39l-3.18-2.49c-.89.6-2.01.96-3.34.96-2.57 0-4.75-1.73-5.53-4.06H3.3v2.55C4.91 19.98 8.27 22 12.18 22z" fill="#34A853"/><path d="M6.65 13.99c-.2-.6-.31-1.25-.31-1.92s.11-1.32.31-1.92V7.6H3.3A9.74 9.74 0 0 0 2 12.07c0 1.57.38 3.05 1.3 4.47l3.35-2.55z" fill="#FBBC05"/><path d="M12.18 4.92c1.45 0 2.75.5 3.78 1.48l2.82-2.82C16.92 1.86 14.7 1 12.18 1 8.27 1 4.91 3.01 3.3 6.14l3.35 2.55c.78-2.34 2.96-4.07 5.53-4.07z" fill="#4285F4"/></svg>
+                                        <span className="text-xs font-black text-gray-500 group-hover:text-rose-600 uppercase tracking-widest transition">Tiếp tục bằng Google</span>
+                                    </a>
                                 </div>
-                                <div className="relative flex justify-center text-xs">
-                                    <span className="px-2 bg-white text-gray-500">
-                                        Đăng nhập bằng tài khoản của bạn trên:
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+                            </form>
 
-                        {/* Google Login */}
-                        <div className="flex items-center justify-center mb-6">
-                            <a
-                                href={route("auth.google")}
-                                className="flex items-center justify-center space-x-2 px-4 py-2 border border-red-600 text-red-600 rounded hover:bg-red-50 transition-colors duration-200"
-                            >
-                                <svg
-                                    className="w-5 h-5"
-                                    fill="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        d="M21.35 11.1h-9.17v2.92h5.37c-.23 1.24-.92 2.29-1.97 2.99v2.49h3.18c1.86-1.71 2.93-4.24 2.93-7.24 0-.7-.06-1.37-.17-2.02z"
-                                        fill="#EA4335"
-                                    />
-                                    <path
-                                        d="M12.18 22c2.66 0 4.89-.88 6.52-2.39l-3.18-2.49c-.89.6-2.01.96-3.34.96-2.57 0-4.75-1.73-5.53-4.06H3.3v2.55C4.91 19.98 8.27 22 12.18 22z"
-                                        fill="#34A853"
-                                    />
-                                    <path
-                                        d="M6.65 13.99c-.2-.6-.31-1.25-.31-1.92s.11-1.32.31-1.92V7.6H3.3A9.74 9.74 0 0 0 2 12.07c0 1.57.38 3.05 1.3 4.47l3.35-2.55z"
-                                        fill="#FBBC05"
-                                    />
-                                    <path
-                                        d="M12.18 4.92c1.45 0 2.75.5 3.78 1.48l2.82-2.82C16.92 1.86 14.7 1 12.18 1 8.27 1 4.91 3.01 3.3 6.14l3.35 2.55c.78-2.34 2.96-4.07 5.53-4.07z"
-                                        fill="#4285F4"
-                                    />
-                                </svg>
-                                <span className="text-sm font-medium">
-                                    Đăng nhập bằng Google
-                                </span>
-                            </a>
-                        </div>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="p-6 bg-white border-t border-gray-200">
-                        <div className="text-center">
-                            <div className="text-yellow-600 font-bold text-base mb-3 tracking-wide">
-                                ABC E-LEARNING
+                            <div className="mt-12 text-center">
+                                <p className="text-xs font-bold text-gray-400">Chưa có tài khoản?</p>
+                                <Link href={route("register")} className="inline-block mt-2 text-sm font-black text-gray-900 border-b-2 border-rose-500 hover:text-rose-600 hover:border-rose-600 transition-all uppercase tracking-widest">Đăng ký thành viên ngay</Link>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </>
+
+            <style>{`
+                @keyframes fade-in { 0% { opacity: 0; } 100% { opacity: 1; } }
+                .animate-fade-in { animation: fade-in 1s ease-out forwards; }
+            `}</style>
+        </div>
     );
 }

@@ -1,31 +1,48 @@
 import { Head, Link, useForm } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
-export default function CreateUser({ departments }) {
+export default function CreateUser({ roles }) {
     const { data, setData, post, processing, errors } = useForm({
         name: "",
         email: "",
-        user_code: "",
         password: "",
         password_confirmation: "",
-        role: "student",
-        department_id: "",
-        phone: "",
-        address: "",
-        is_active: true,
+        roles: ["user"], // Default to base user role
     });
+
+    const handleRoleToggle = (roleName) => {
+        if (data.roles.includes(roleName)) {
+            setData("roles", data.roles.filter(r => r !== roleName));
+        } else {
+            setData("roles", [...data.roles, roleName]);
+        }
+    };
 
     const submit = (e) => {
         e.preventDefault();
-        post(route("admin.users.store"));
+        post(route("admin.users.store"), {
+            preserveScroll: true,
+        });
+    };
+
+    // Role mapping for display
+    const translateRole = (r) => {
+        const map = {
+            admin: "Quản trị viên",
+            user: "Người dùng (Cơ bản)",
+            donor: "Nhà hảo tâm",
+            volunteer: "Tình nguyện viên",
+            requester: "Người kêu gọi"
+        };
+        return map[r] || r;
     };
 
     return (
         <AuthenticatedLayout
             header={
                 <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-gray-800">
-                        Thêm Người dùng Mới
+                    <h2 className="text-xl font-bold text-gray-800">
+                        Thêm tài khoản mới
                     </h2>
                     <Link
                         href={route("admin.users.index")}
@@ -36,322 +53,107 @@ export default function CreateUser({ departments }) {
                 </div>
             }
         >
-            <Head title="Thêm người dùng" />
+            <Head title="Thêm tài khoản" />
 
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto mb-10">
                 <div className="bg-white rounded-lg shadow">
                     <form onSubmit={submit} className="p-6 space-y-6">
                         {/* Thông tin cơ bản */}
                         <div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                                Thông tin cơ bản
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">
+                                Thông tin đăng nhập
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Họ và tên{" "}
-                                        <span className="text-red-500">*</span>
+                                        Họ và tên <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
                                         value={data.name}
-                                        onChange={(e) =>
-                                            setData("name", e.target.value)
-                                        }
-                                        className={`w-full px-4 py-2 border ${
-                                            errors.name
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                                        placeholder="Nhập họ và tên"
+                                        onChange={(e) => setData("name", e.target.value)}
+                                        className={`w-full px-4 py-2 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-rose-500 focus:border-rose-500`}
                                     />
-                                    {errors.name && (
-                                        <p className="mt-1 text-sm text-red-600">
-                                            {errors.name}
-                                        </p>
-                                    )}
+                                    {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Email{" "}
-                                        <span className="text-red-500">*</span>
+                                        Email <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="email"
                                         value={data.email}
-                                        onChange={(e) =>
-                                            setData("email", e.target.value)
-                                        }
-                                        className={`w-full px-4 py-2 border ${
-                                            errors.email
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                                        placeholder="example@email.com"
+                                        onChange={(e) => setData("email", e.target.value)}
+                                        className={`w-full px-4 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-rose-500 focus:border-rose-500`}
                                     />
-                                    {errors.email && (
-                                        <p className="mt-1 text-sm text-red-600">
-                                            {errors.email}
-                                        </p>
-                                    )}
+                                    {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Mã số{" "}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={data.user_code}
-                                        onChange={(e) =>
-                                            setData("user_code", e.target.value)
-                                        }
-                                        className={`w-full px-4 py-2 border ${
-                                            errors.user_code
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                                        placeholder="Mã sinh viên / Mã giảng viên"
-                                    />
-                                    {errors.user_code && (
-                                        <p className="mt-1 text-sm text-red-600">
-                                            {errors.user_code}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Số điện thoại
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={data.phone}
-                                        onChange={(e) =>
-                                            setData("phone", e.target.value)
-                                        }
-                                        className={`w-full px-4 py-2 border ${
-                                            errors.phone
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                                        placeholder="0123456789"
-                                    />
-                                    {errors.phone && (
-                                        <p className="mt-1 text-sm text-red-600">
-                                            {errors.phone}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Vai trò và phân quyền */}
-                        <div className="border-t pt-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                                Vai trò và phân quyền
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Vai trò{" "}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        value={data.role}
-                                        onChange={(e) =>
-                                            setData("role", e.target.value)
-                                        }
-                                        className={`w-full px-4 py-2 border ${
-                                            errors.role
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                                    >
-                                        <option value="student">
-                                            Sinh viên
-                                        </option>
-                                        <option value="teacher">
-                                            Giảng viên
-                                        </option>
-                                        <option value="admin">
-                                            Quản trị viên
-                                        </option>
-                                    </select>
-                                    {errors.role && (
-                                        <p className="mt-1 text-sm text-red-600">
-                                            {errors.role}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Khoa
-                                    </label>
-                                    <select
-                                        value={data.department_id}
-                                        onChange={(e) =>
-                                            setData(
-                                                "department_id",
-                                                e.target.value
-                                            )
-                                        }
-                                        className={`w-full px-4 py-2 border ${
-                                            errors.department_id
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                                    >
-                                        <option value="">
-                                            -- Chọn khoa --
-                                        </option>
-                                        {departments?.map((dept) => (
-                                            <option
-                                                key={dept.id}
-                                                value={dept.id}
-                                            >
-                                                {dept.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.department_id && (
-                                        <p className="mt-1 text-sm text-red-600">
-                                            {errors.department_id}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Mật khẩu */}
-                        <div className="border-t pt-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                                Mật khẩu
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Mật khẩu{" "}
-                                        <span className="text-red-500">*</span>
+                                        Mật khẩu <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="password"
                                         value={data.password}
-                                        onChange={(e) =>
-                                            setData("password", e.target.value)
-                                        }
-                                        className={`w-full px-4 py-2 border ${
-                                            errors.password
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                                        placeholder="Nhập mật khẩu"
+                                        onChange={(e) => setData("password", e.target.value)}
+                                        className={`w-full px-4 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-rose-500 focus:border-rose-500`}
                                     />
-                                    {errors.password && (
-                                        <p className="mt-1 text-sm text-red-600">
-                                            {errors.password}
-                                        </p>
-                                    )}
+                                    {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Xác nhận mật khẩu{" "}
-                                        <span className="text-red-500">*</span>
+                                        Nhập lại mật khẩu <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="password"
                                         value={data.password_confirmation}
-                                        onChange={(e) =>
-                                            setData(
-                                                "password_confirmation",
-                                                e.target.value
-                                            )
-                                        }
-                                        className={`w-full px-4 py-2 border ${
-                                            errors.password_confirmation
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                                        placeholder="Nhập lại mật khẩu"
+                                        onChange={(e) => setData("password_confirmation", e.target.value)}
+                                        className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-rose-500 focus:border-rose-500`}
                                     />
-                                    {errors.password_confirmation && (
-                                        <p className="mt-1 text-sm text-red-600">
-                                            {errors.password_confirmation}
-                                        </p>
-                                    )}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Địa chỉ */}
-                        <div className="border-t pt-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                                Thông tin khác
+                        {/* Phân quyền */}
+                        <div className="pt-4">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">
+                                Thiết lập Vai trò (Role)
                             </h3>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Địa chỉ
-                                </label>
-                                <textarea
-                                    value={data.address}
-                                    onChange={(e) =>
-                                        setData("address", e.target.value)
-                                    }
-                                    rows={3}
-                                    className={`w-full px-4 py-2 border ${
-                                        errors.address
-                                            ? "border-red-500"
-                                            : "border-gray-300"
-                                    } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                                    placeholder="Nhập địa chỉ"
-                                />
-                                {errors.address && (
-                                    <p className="mt-1 text-sm text-red-600">
-                                        {errors.address}
-                                    </p>
-                                )}
+                            <p className="text-sm text-gray-500 mb-4">Một người dùng có thể nhận nhiều quyền cùng lúc.</p>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {roles.map(role => (
+                                    <label key={role} className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${data.roles.includes(role) ? 'bg-rose-50 border-rose-200' : 'hover:bg-gray-50'}`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={data.roles.includes(role)}
+                                            onChange={() => handleRoleToggle(role)}
+                                            className="w-5 h-5 text-rose-600 border-gray-300 rounded focus:ring-rose-500"
+                                        />
+                                        <span className="ml-3 font-medium text-gray-800 capitalize">
+                                            {translateRole(role)}
+                                        </span>
+                                    </label>
+                                ))}
                             </div>
-
-                            <div className="mt-4">
-                                <label className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        checked={data.is_active}
-                                        onChange={(e) =>
-                                            setData(
-                                                "is_active",
-                                                e.target.checked
-                                            )
-                                        }
-                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                    />
-                                    <span className="ml-2 text-sm text-gray-700">
-                                        Kích hoạt tài khoản
-                                    </span>
-                                </label>
-                            </div>
+                            {errors.roles && <p className="mt-2 text-sm text-red-600">{errors.roles}</p>}
                         </div>
 
-                        {/* Submit Buttons */}
                         <div className="flex justify-end space-x-4 pt-6 border-t">
                             <Link
                                 href={route("admin.users.index")}
-                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors"
+                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-semibold"
                             >
-                                Hủy
+                                Hủy bỏ
                             </Link>
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                                className="px-6 py-2 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white rounded-lg font-semibold shadow"
                             >
-                                {processing
-                                    ? "Đang xử lý..."
-                                    : "Tạo người dùng"}
+                                {processing ? "Đang tạo..." : "Tạo tài khoản"}
                             </button>
                         </div>
                     </form>

@@ -1,9 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Head, Link, useForm } from "@inertiajs/react";
 
 export default function Register() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    useEffect(() => {
+        setIsLoaded(true);
+    }, []);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         name: "",
@@ -20,364 +25,166 @@ export default function Register() {
     };
 
     return (
-        <>
-            <Head title="Đăng ký">
-                <link rel="preconnect" href="https://fonts.googleapis.com" />
-                <link
-                    rel="preconnect"
-                    href="https://fonts.gstatic.com"
-                    crossOrigin="anonymous"
-                />
-                <link
-                    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-                    rel="stylesheet"
-                />
-            </Head>
+        <div className="min-h-screen bg-gray-50 flex overflow-hidden font-sans">
+            <Head title="Tham gia cộng đồng - VNHeart" />
 
-            <style>{`
-                * {
-                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                }
-            `}</style>
+            {/* Background Blobs for Atmosphere */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-[-10%] right-[-10%] w-[45%] h-[45%] bg-rose-200/30 rounded-full blur-[120px] animate-pulse"></div>
+                <div className="absolute bottom-[-10%] left-[-10%] w-[45%] h-[45%] bg-blue-100/30 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '3.5s' }}></div>
+            </div>
 
-            <div className="min-h-screen flex">
-                {/* Left Side - Hero Section with Background */}
-                <div
-                    className="flex-1 relative bg-cover bg-center bg-no-repeat"
-                    style={{
-                        backgroundImage:
-                            "linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('https://images.unsplash.com/photo-1503676260728-1c00da094a0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2022&q=80')",
-                    }}
-                >
-                    {/* Logo and Brand */}
-                    <div className="absolute top-6 left-6 flex items-center">
-                        <div className="w-16 h-16 bg-blue-700 rounded-full flex items-center justify-center border-4 border-white shadow-lg mr-3">
-                            <div className="text-white">
-                                <svg
-                                    className="w-8 h-8"
-                                    fill="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" />
-                                </svg>
+            <div className="flex-1 flex flex-col lg:flex-row relative z-10 w-full overflow-y-auto">
+                {/* Left Side: Visual Inspiration (60% on Desktop) */}
+                <div className="hidden lg:flex lg:w-[60%] relative overflow-hidden bg-gray-900">
+                    <img 
+                        src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
+                        alt="Join the Movement" 
+                        className={`w-full h-full object-cover transition-all duration-[2000ms] ease-out ${isLoaded ? 'opacity-70 scale-100 rotate-0' : 'opacity-0 scale-125 rotate-2'}`}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-tr from-rose-900/40 via-transparent to-black/20"></div>
+                    
+                    {/* Floating Branding Overlay */}
+                    <div className="absolute top-12 left-12 flex items-center space-x-4 animate-fade-in">
+                        <Link href="/" className="flex items-center space-x-4 group">
+                            <div className="w-14 h-14 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20 shadow-2xl transition-transform group-hover:scale-110">
+                                <span className="text-white text-3xl font-black">♥</span>
                             </div>
-                        </div>
-                        <span className="text-white text-2xl font-bold tracking-wide">
-                            ĐẠI HỌC ABC LMS
-                        </span>
+                            <span className="text-white text-3xl font-black tracking-tighter">VNHeart</span>
+                        </Link>
                     </div>
 
-                    {/* Main Content */}
-                    <div className="flex items-center justify-start h-full pl-12 pr-16">
-                        <div className="max-w-2xl">
-                            <div className="mb-6">
-                                <p className="text-orange-400 font-bold text-lg tracking-wide uppercase mb-4">
-                                    HỆ THỐNG QUẢN LÍ HỌC TẬP TRỰC TUYẾN
-                                </p>
+                    <div className={`absolute bottom-20 left-16 max-w-xl transition-all duration-1000 delay-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+                        <p className="text-rose-400 font-black uppercase tracking-[0.4em] text-xs mb-4">Khởi đầu hành trình mới</p>
+                        <h2 className="text-5xl lg:text-7xl font-black text-white leading-tight mb-8">Trở thành một <br/><span className="bg-clip-text text-transparent bg-gradient-to-r from-rose-400 to-red-400">người hùng</span> đời thực</h2>
+                        <div className="flex items-center space-x-8">
+                            <div className="flex flex-col">
+                                <span className="text-white text-4xl font-black italic">500+</span>
+                                <span className="text-white/50 text-[10px] uppercase font-black tracking-[0.2em]">Dự án hoàn thành</span>
                             </div>
-                            <h1 className="text-7xl font-black text-white mb-6 leading-tight tracking-tight">
-                                TRƯỜNG ĐẠI HỌC
-                                <br />
-                                ABC VIỆT NAM
-                            </h1>
-                            <p className="text-xl text-white mb-4">
-                                Tạo tài khoản để truy cập hệ thống
-                            </p>
+                            <div className="h-10 w-px bg-white/20"></div>
+                            <div className="flex flex-col">
+                                <span className="text-white text-4xl font-black italic">2B+</span>
+                                <span className="text-white/50 text-[10px] uppercase font-black tracking-[0.2em]">Tổng tiền quyên góp</span>
+                            </div>
                         </div>
-                    </div>
-
-                    {/* Footer Copyright */}
-                    <div className="absolute bottom-6 left-6">
-                        <p className="text-white text-sm">
-                            Copyright@2025 Trường Đại Học ABC Việt Nam
-                        </p>
                     </div>
                 </div>
 
-                {/* Right Side - Register Form */}
-                <div className="w-96 bg-white shadow-2xl flex flex-col">
-                    {/* Header */}
-                    <div className="p-6 bg-white">
-                        <div className="flex items-center justify-center mb-6">
-                            <div className="w-14 h-14 bg-blue-700 rounded-full flex items-center justify-center border-2 border-blue-800 mr-3">
-                                <svg
-                                    className="w-7 h-7 text-white"
-                                    fill="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" />
-                                </svg>
+                {/* Right Side: Register Form (40% on Desktop, 100% on Mobile) */}
+                <div className="flex-1 lg:w-[40%] flex items-center justify-center p-6 lg:p-12">
+                    <div className={`w-full max-w-lg transition-all duration-1000 delay-700 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
+                        
+                        <div className="bg-white/70 backdrop-blur-3xl rounded-[3.5rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] border border-white p-8 lg:p-14">
+                            <div className="mb-10">
+                                <h3 className="text-3xl font-black text-gray-900 mb-2 leading-none">Tham gia ngay</h3>
+                                <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">Kiến tạo tương lai tươi đẹp</p>
                             </div>
-                            <div>
-                                <div className="text-xs text-gray-600 uppercase tracking-wider font-medium">
-                                    TRƯỜNG ĐẠI HỌC ABC VIỆT NAM
-                                </div>
-                                <div className="text-red-600 font-bold text-sm tracking-wide">
-                                    ĐĂNG KÝ TÀI KHOẢN
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    {/* Register Form */}
-                    <div className="flex-1 px-6 pb-6 overflow-y-auto">
-                        <form onSubmit={submit} className="space-y-4">
-                            {/* Name Field */}
-                            <div>
-                                <label
-                                    htmlFor="name"
-                                    className="block text-sm font-medium text-gray-700 mb-1"
-                                >
-                                    Họ và tên
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg
-                                            className="h-5 w-5 text-gray-400"
-                                            fill="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                                        </svg>
+                            <form onSubmit={submit} className="space-y-5">
+                                {/* Name Field */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Họ và tên</label>
+                                    <div className="relative group">
+                                        <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none text-gray-400 group-focus-within:text-rose-500 transition-colors">
+                                            <svg className="w-5 h-5 text-gray-300 group-focus-within:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={data.name}
+                                            onChange={(e) => setData("name", e.target.value)}
+                                            className={`w-full bg-gray-50/50 border-2 ${errors.name ? 'border-red-200' : 'border-gray-50'} focus:border-rose-400 focus:ring-8 focus:ring-rose-500/10 rounded-2xl py-4 pl-14 pr-6 font-bold text-gray-900 transition-all placeholder:text-gray-300`}
+                                            placeholder="Danh Dang"
+                                            required
+                                        />
                                     </div>
-                                    <input
-                                        id="name"
-                                        type="text"
-                                        name="name"
-                                        value={data.name}
-                                        onChange={(e) =>
-                                            setData("name", e.target.value)
-                                        }
-                                        className={`block w-full pl-10 pr-3 py-3 border ${
-                                            errors.name
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm`}
-                                        placeholder="Nhập họ và tên"
-                                        autoFocus
-                                        required
-                                    />
+                                    {errors.name && <p className="text-red-500 text-[10px] font-black uppercase tracking-wider ml-4 mt-1">⚠️ {errors.name}</p>}
                                 </div>
-                                {errors.name && (
-                                    <p className="mt-1 text-xs text-red-600">
-                                        {errors.name}
-                                    </p>
-                                )}
-                            </div>
 
-                            {/* Email Field */}
-                            <div>
-                                <label
-                                    htmlFor="email"
-                                    className="block text-sm font-medium text-gray-700 mb-1"
-                                >
-                                    Email
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg
-                                            className="h-5 w-5 text-gray-400"
-                                            fill="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z" />
-                                        </svg>
+                                {/* Email Field */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Email xác nhận</label>
+                                    <div className="relative group">
+                                        <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none text-gray-400 group-focus-within:text-rose-500 transition-colors">
+                                            <svg className="w-5 h-5 text-gray-300 group-focus-within:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                        </div>
+                                        <input
+                                            type="email"
+                                            value={data.email}
+                                            onChange={(e) => setData("email", e.target.value)}
+                                            className={`w-full bg-gray-50/50 border-2 ${errors.email ? 'border-red-200' : 'border-gray-50'} focus:border-rose-400 focus:ring-8 focus:ring-rose-500/10 rounded-2xl py-4 pl-14 pr-6 font-bold text-gray-900 transition-all placeholder:text-gray-300`}
+                                            placeholder="anhdang@example.com"
+                                            required
+                                        />
                                     </div>
-                                    <input
-                                        id="email"
-                                        type="email"
-                                        name="email"
-                                        value={data.email}
-                                        onChange={(e) =>
-                                            setData("email", e.target.value)
-                                        }
-                                        className={`block w-full pl-10 pr-3 py-3 border ${
-                                            errors.email
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm`}
-                                        placeholder="Nhập email"
-                                        required
-                                    />
+                                    {errors.email && <p className="text-red-500 text-[10px] font-black uppercase tracking-wider ml-4 mt-1">⚠️ {errors.email}</p>}
                                 </div>
-                                {errors.email && (
-                                    <p className="mt-1 text-xs text-red-600">
-                                        {errors.email}
-                                    </p>
-                                )}
-                            </div>
 
-                            {/* Password Field */}
-                            <div>
-                                <label
-                                    htmlFor="password"
-                                    className="block text-sm font-medium text-gray-700 mb-1"
-                                >
-                                    Mật khẩu
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg
-                                            className="h-5 w-5 text-gray-400"
-                                            fill="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path d="M18,8h-1V6c0-2.76-2.24-5-5-5S7,3.24,7,6v2H6c-1.1,0-2,0.9-2,2v10c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2V10C20,8.9,19.1,8,18,8z M12,17c-1.1,0-2-0.9-2-2s0.9-2,2-2s2,0.9,2,2S13.1,17,12,17z M15.1,8H8.9V6c0-1.71,1.39-3.1,3.1-3.1s3.1,1.39,3.1,3.1V8z" />
-                                        </svg>
+                                {/* Password Grid */}
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Mật khẩu</label>
+                                        <div className="relative group">
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                value={data.password}
+                                                onChange={(e) => setData("password", e.target.value)}
+                                                className={`w-full bg-gray-50/50 border-2 ${errors.password ? 'border-red-200' : 'border-gray-50'} focus:border-rose-400 focus:ring-8 focus:ring-rose-500/10 rounded-2xl py-4 pl-6 pr-12 font-bold text-gray-900 transition-all placeholder:text-gray-300 text-sm`}
+                                                placeholder="••••••••"
+                                            />
+                                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-4 flex items-center text-gray-300">
+                                                {showPassword ? "👁️" : "🔒"}
+                                            </button>
+                                        </div>
                                     </div>
-                                    <input
-                                        id="password"
-                                        type={
-                                            showPassword ? "text" : "password"
-                                        }
-                                        name="password"
-                                        value={data.password}
-                                        onChange={(e) =>
-                                            setData("password", e.target.value)
-                                        }
-                                        className={`block w-full pl-10 pr-10 py-3 border ${
-                                            errors.password
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm`}
-                                        placeholder="Nhập mật khẩu"
-                                        required
-                                    />
-                                    <button
-                                        type="button"
-                                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                                        onClick={() =>
-                                            setShowPassword(!showPassword)
-                                        }
-                                    >
-                                        <svg
-                                            className="h-5 w-5 text-gray-400 hover:text-gray-600"
-                                            fill="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            {showPassword ? (
-                                                <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
-                                            ) : (
-                                                <path d="M11.83,9L15,12.16C15,12.11 15,12.05 15,12A3,3 0 0,0 12,9C11.94,9 11.89,9 11.83,9M7.53,9.8L9.08,11.35C9.03,11.56 9,11.77 9,12A3,3 0 0,0 12,15C12.22,15 12.44,14.97 12.65,14.92L14.2,16.47C13.53,16.8 12.79,17 12,17A5,5 0 0,1 7,12C7,11.21 7.2,10.47 7.53,9.8M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.09L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.35C10.74,7.13 11.35,7 12,7Z" />
-                                            )}
-                                        </svg>
-                                    </button>
-                                </div>
-                                {errors.password && (
-                                    <p className="mt-1 text-xs text-red-600">
-                                        {errors.password}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Confirm Password Field */}
-                            <div>
-                                <label
-                                    htmlFor="password_confirmation"
-                                    className="block text-sm font-medium text-gray-700 mb-1"
-                                >
-                                    Xác nhận mật khẩu
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg
-                                            className="h-5 w-5 text-gray-400"
-                                            fill="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path d="M18,8h-1V6c0-2.76-2.24-5-5-5S7,3.24,7,6v2H6c-1.1,0-2,0.9-2,2v10c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2V10C20,8.9,19.1,8,18,8z M12,17c-1.1,0-2-0.9-2-2s0.9-2,2-2s2,0.9,2,2S13.1,17,12,17z M15.1,8H8.9V6c0-1.71,1.39-3.1,3.1-3.1s3.1,1.39,3.1,3.1V8z" />
-                                        </svg>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Xác nhận lại</label>
+                                        <div className="relative group">
+                                            <input
+                                                type={showConfirmPassword ? "text" : "password"}
+                                                value={data.password_confirmation}
+                                                onChange={(e) => setData("password_confirmation", e.target.value)}
+                                                className={`w-full bg-gray-50/50 border-2 ${errors.password_confirmation ? 'border-red-200' : 'border-gray-50'} focus:border-rose-400 focus:ring-8 focus:ring-rose-500/10 rounded-2xl py-4 pl-6 pr-12 font-bold text-gray-900 transition-all placeholder:text-gray-300 text-sm`}
+                                                placeholder="••••••••"
+                                            />
+                                            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-4 flex items-center text-gray-300">
+                                                {showConfirmPassword ? "👁️" : "🔒"}
+                                            </button>
+                                        </div>
                                     </div>
-                                    <input
-                                        id="password_confirmation"
-                                        type={
-                                            showConfirmPassword
-                                                ? "text"
-                                                : "password"
-                                        }
-                                        name="password_confirmation"
-                                        value={data.password_confirmation}
-                                        onChange={(e) =>
-                                            setData(
-                                                "password_confirmation",
-                                                e.target.value
-                                            )
-                                        }
-                                        className={`block w-full pl-10 pr-10 py-3 border ${
-                                            errors.password_confirmation
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm`}
-                                        placeholder="Nhập lại mật khẩu"
-                                        required
-                                    />
-                                    <button
-                                        type="button"
-                                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                                        onClick={() =>
-                                            setShowConfirmPassword(
-                                                !showConfirmPassword
-                                            )
-                                        }
-                                    >
-                                        <svg
-                                            className="h-5 w-5 text-gray-400 hover:text-gray-600"
-                                            fill="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            {showConfirmPassword ? (
-                                                <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
-                                            ) : (
-                                                <path d="M11.83,9L15,12.16C15,12.11 15,12.05 15,12A3,3 0 0,0 12,9C11.94,9 11.89,9 11.83,9M7.53,9.8L9.08,11.35C9.03,11.56 9,11.77 9,12A3,3 0 0,0 12,15C12.22,15 12.44,14.97 12.65,14.92L14.2,16.47C13.53,16.8 12.79,17 12,17A5,5 0 0,1 7,12C7,11.21 7.2,10.47 7.53,9.8M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.09L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.35C10.74,7.13 11.35,7 12,7Z" />
-                                            )}
-                                        </svg>
-                                    </button>
                                 </div>
-                                {errors.password_confirmation && (
-                                    <p className="mt-1 text-xs text-red-600">
-                                        {errors.password_confirmation}
-                                    </p>
-                                )}
-                            </div>
+                                {(errors.password || errors.password_confirmation) && <p className="text-red-500 text-[10px] font-black uppercase tracking-wider ml-4 mt-1">⚠️ Mật khẩu không khớp hoặc không hợp lệ</p>}
 
-                            {/* Register Button */}
-                            <div className="pt-2">
+                                {/* Terms */}
+                                <div className="text-[10px] text-gray-400 font-bold text-center px-4 leading-relaxed group">
+                                    Bằng cách bấm đăng ký, bạn đồng ý với <span className="text-rose-500 cursor-help border-b border-rose-200">Điều khoản vận hành</span> và <span className="text-rose-500 cursor-help border-b border-rose-200">Chính sách minh bạch</span> của VNHeart.
+                                </div>
+
+                                {/* Submit Button */}
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full py-5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-black rounded-2xl shadow-xl shadow-rose-100 hover:shadow-rose-400/30 transition-all active:scale-95 disabled:opacity-50 uppercase tracking-[0.4em] text-sm"
                                 >
-                                    {processing
-                                        ? "Đang xử lý..."
-                                        : "Đăng ký tài khoản"}
+                                    {processing ? "⏳ Đang tạo tài khoản..." : "Xác nhận tham gia"}
                                 </button>
-                            </div>
+                            </form>
 
-                            {/* Login Link */}
-                            <div className="text-center pt-4 border-t border-gray-200">
-                                <p className="text-sm text-gray-600">
-                                    Đã có tài khoản?{" "}
-                                    <Link
-                                        href={route("login")}
-                                        className="font-medium text-blue-600 hover:text-blue-500"
-                                    >
-                                        Đăng nhập ngay
-                                    </Link>
-                                </p>
-                            </div>
-                        </form>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="p-6 bg-white border-t border-gray-200">
-                        <div className="text-center">
-                            <div className="text-yellow-600 font-bold text-base mb-3 tracking-wide">
-                                ABC E-LEARNING
+                            <div className="mt-10 text-center">
+                                <p className="text-xs font-bold text-gray-400">Bạn đã là thành viên?</p>
+                                <Link href={route("login")} className="inline-block mt-2 text-sm font-black text-rose-500 hover:text-rose-600 transition-all uppercase tracking-widest group">
+                                    Trở về Đăng nhập <span className="inline-block transition-transform group-hover:translate-x-1">→</span>
+                                </Link>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </>
+
+            <style>{`
+                @keyframes fade-in { 0% { opacity: 0; } 100% { opacity: 1; } }
+                .animate-fade-in { animation: fade-in 1.5s ease-out forwards; }
+            `}</style>
+        </div>
     );
 }

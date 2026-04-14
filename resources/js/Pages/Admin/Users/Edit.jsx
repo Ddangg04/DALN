@@ -1,21 +1,44 @@
 import { Head, Link, useForm } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
-export default function EditUser({ user, departments }) {
+export default function EditUser({ user, roles }) {
+    // Collect user's assigned roles (names)
+    const currentRoles = user.roles ? user.roles.map(r => r.name) : [];
+
     const { data, setData, put, processing, errors } = useForm({
         name: user.name || "",
         email: user.email || "",
-        user_code: user.user_code || "",
-        role: user.role || "student",
-        department_id: user.department_id || "",
+        roles: currentRoles,
         phone: user.phone || "",
         address: user.address || "",
-        is_active: user.is_active || false,
+        is_active: user.is_active === undefined ? true : !!user.is_active,
     });
+
+    const handleRoleToggle = (roleName) => {
+        if (data.roles.includes(roleName)) {
+            setData("roles", data.roles.filter(r => r !== roleName));
+        } else {
+            setData("roles", [...data.roles, roleName]);
+        }
+    };
 
     const submit = (e) => {
         e.preventDefault();
-        put(route("admin.users.update", user.id));
+        put(route("admin.users.update", user.id), {
+            preserveScroll: true,
+        });
+    };
+
+    // Role mapping for display
+    const translateRole = (r) => {
+        const map = {
+            admin: "Quản trị viên",
+            user: "Người dùng (Cơ bản)",
+            donor: "Nhà hảo tâm",
+            volunteer: "Tình nguyện viên",
+            requester: "Người kêu gọi"
+        };
+        return map[r] || r;
     };
 
     return (
@@ -23,7 +46,7 @@ export default function EditUser({ user, departments }) {
             header={
                 <div className="flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-gray-800">
-                        Chỉnh sửa Người dùng
+                        Sửa thông tin tài khoản
                     </h2>
                     <Link
                         href={route("admin.users.index")}
@@ -34,90 +57,41 @@ export default function EditUser({ user, departments }) {
                 </div>
             }
         >
-            <Head title="Chỉnh sửa người dùng" />
+            <Head title="Sửa người dùng" />
 
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto mb-10">
                 <div className="bg-white rounded-lg shadow">
                     <form onSubmit={submit} className="p-6 space-y-6">
                         {/* Thông tin cơ bản */}
                         <div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                                Thông tin cơ bản
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">
+                                Thông tin tài khoản
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Họ và tên{" "}
-                                        <span className="text-red-500">*</span>
+                                        Họ và tên <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
                                         value={data.name}
-                                        onChange={(e) =>
-                                            setData("name", e.target.value)
-                                        }
-                                        className={`w-full px-4 py-2 border ${
-                                            errors.name
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                                        placeholder="Nhập họ và tên"
+                                        onChange={(e) => setData("name", e.target.value)}
+                                        className={`w-full px-4 py-2 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-rose-500 focus:border-rose-500`}
                                     />
-                                    {errors.name && (
-                                        <p className="mt-1 text-sm text-red-600">
-                                            {errors.name}
-                                        </p>
-                                    )}
+                                    {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Email{" "}
-                                        <span className="text-red-500">*</span>
+                                        Email <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="email"
                                         value={data.email}
-                                        onChange={(e) =>
-                                            setData("email", e.target.value)
-                                        }
-                                        className={`w-full px-4 py-2 border ${
-                                            errors.email
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                                        placeholder="example@email.com"
+                                        onChange={(e) => setData("email", e.target.value)}
+                                        className={`w-full px-4 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-rose-500 focus:border-rose-500`}
                                     />
-                                    {errors.email && (
-                                        <p className="mt-1 text-sm text-red-600">
-                                            {errors.email}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Mã số{" "}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={data.user_code}
-                                        onChange={(e) =>
-                                            setData("user_code", e.target.value)
-                                        }
-                                        className={`w-full px-4 py-2 border ${
-                                            errors.user_code
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                                        placeholder="Mã sinh viên / Mã giảng viên"
-                                    />
-                                    {errors.user_code && (
-                                        <p className="mt-1 text-sm text-red-600">
-                                            {errors.user_code}
-                                        </p>
-                                    )}
+                                    {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
                                 </div>
 
                                 <div>
@@ -127,192 +101,76 @@ export default function EditUser({ user, departments }) {
                                     <input
                                         type="text"
                                         value={data.phone}
-                                        onChange={(e) =>
-                                            setData("phone", e.target.value)
-                                        }
-                                        className={`w-full px-4 py-2 border ${
-                                            errors.phone
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                                        placeholder="0123456789"
+                                        onChange={(e) => setData("phone", e.target.value)}
+                                        className={`w-full px-4 py-2 border ${errors.phone ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-rose-500 focus:border-rose-500`}
                                     />
-                                    {errors.phone && (
-                                        <p className="mt-1 text-sm text-red-600">
-                                            {errors.phone}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Vai trò và phân quyền */}
-                        <div className="border-t pt-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                                Vai trò và phân quyền
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Vai trò{" "}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        value={data.role}
-                                        onChange={(e) =>
-                                            setData("role", e.target.value)
-                                        }
-                                        className={`w-full px-4 py-2 border ${
-                                            errors.role
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                                    >
-                                        <option value="student">
-                                            Sinh viên
-                                        </option>
-                                        <option value="teacher">
-                                            Giảng viên
-                                        </option>
-                                        <option value="admin">
-                                            Quản trị viên
-                                        </option>
-                                    </select>
-                                    {errors.role && (
-                                        <p className="mt-1 text-sm text-red-600">
-                                            {errors.role}
-                                        </p>
-                                    )}
+                                    {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Khoa
+                                    <label className="block mt-8 flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={data.is_active}
+                                            onChange={(e) => setData("is_active", e.target.checked)}
+                                            className="w-5 h-5 text-rose-600 border-gray-300 rounded focus:ring-rose-500"
+                                        />
+                                        <span className="ml-2 font-medium text-gray-700">Kích hoạt tài khoản</span>
                                     </label>
-                                    <select
-                                        value={data.department_id}
-                                        onChange={(e) =>
-                                            setData(
-                                                "department_id",
-                                                e.target.value
-                                            )
-                                        }
-                                        className={`w-full px-4 py-2 border ${
-                                            errors.department_id
-                                                ? "border-red-500"
-                                                : "border-gray-300"
-                                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                                    >
-                                        <option value="">
-                                            -- Chọn khoa --
-                                        </option>
-                                        {departments?.map((dept) => (
-                                            <option
-                                                key={dept.id}
-                                                value={dept.id}
-                                            >
-                                                {dept.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.department_id && (
-                                        <p className="mt-1 text-sm text-red-600">
-                                            {errors.department_id}
-                                        </p>
-                                    )}
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Địa chỉ */}
-                        <div className="border-t pt-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                                Thông tin khác
-                            </h3>
-                            <div>
+                            <div className="mt-6">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Địa chỉ
                                 </label>
                                 <textarea
                                     value={data.address}
-                                    onChange={(e) =>
-                                        setData("address", e.target.value)
-                                    }
-                                    rows={3}
-                                    className={`w-full px-4 py-2 border ${
-                                        errors.address
-                                            ? "border-red-500"
-                                            : "border-gray-300"
-                                    } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                                    placeholder="Nhập địa chỉ"
-                                />
-                                {errors.address && (
-                                    <p className="mt-1 text-sm text-red-600">
-                                        {errors.address}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="mt-4">
-                                <label className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        checked={data.is_active}
-                                        onChange={(e) =>
-                                            setData(
-                                                "is_active",
-                                                e.target.checked
-                                            )
-                                        }
-                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                    />
-                                    <span className="ml-2 text-sm text-gray-700">
-                                        Kích hoạt tài khoản
-                                    </span>
-                                </label>
+                                    onChange={(e) => setData("address", e.target.value)}
+                                    rows={2}
+                                    className={`w-full px-4 py-2 border ${errors.address ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-rose-500 focus:border-rose-500`}
+                                ></textarea>
+                                {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
                             </div>
                         </div>
 
-                        {/* Note about password */}
-                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                            <div className="flex">
-                                <div className="flex-shrink-0">
-                                    <svg
-                                        className="h-5 w-5 text-yellow-400"
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor"
-                                    >
-                                        <path
-                                            fillRule="evenodd"
-                                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                                            clipRule="evenodd"
+                        {/* Phân quyền */}
+                        <div className="pt-4">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">
+                                Cấp quyền đặc biệt (Role)
+                            </h3>
+                            <p className="text-sm text-gray-500 mb-4">Một người dùng có thể nhận nhiều quyền cùng lúc.</p>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {roles.map(role => (
+                                    <label key={role} className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${data.roles.includes(role) ? 'bg-rose-50 border-rose-200' : 'hover:bg-gray-50'}`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={data.roles.includes(role)}
+                                            onChange={() => handleRoleToggle(role)}
+                                            className="w-5 h-5 text-rose-600 border-gray-300 rounded focus:ring-rose-500"
                                         />
-                                    </svg>
-                                </div>
-                                <div className="ml-3">
-                                    <p className="text-sm text-yellow-700">
-                                        Để thay đổi mật khẩu, vui lòng sử dụng
-                                        chức năng "Reset mật khẩu" trong danh
-                                        sách người dùng.
-                                    </p>
-                                </div>
+                                        <span className="ml-3 font-medium text-gray-800 capitalize">
+                                            {translateRole(role)}
+                                        </span>
+                                    </label>
+                                ))}
                             </div>
+                            {errors.roles && <p className="mt-2 text-sm text-red-600">{errors.roles}</p>}
                         </div>
 
-                        {/* Submit Buttons */}
                         <div className="flex justify-end space-x-4 pt-6 border-t">
                             <Link
                                 href={route("admin.users.index")}
-                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors"
+                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-semibold"
                             >
-                                Hủy
+                                Hủy bỏ
                             </Link>
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                                className="px-6 py-2 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white rounded-lg font-semibold shadow"
                             >
-                                {processing ? "Đang xử lý..." : "Cập nhật"}
+                                {processing ? "Đang lưu..." : "Lưu thay đổi"}
                             </button>
                         </div>
                     </form>

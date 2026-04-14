@@ -40,11 +40,6 @@ class RegisteredUserController extends Controller
                 'email',
                 'max:255',
                 'unique:' . User::class,
-                function ($attribute, $value, $fail) {
-                    if (!str_ends_with($value, '@st.phenikaa-uni.edu.vn')) {
-                        $fail('Bạn chỉ có thể đăng ký bằng email sinh viên @st.phenikaa-uni.edu.vn.');
-                    }
-                },
             ],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
@@ -55,10 +50,14 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        if (class_exists(\Spatie\Permission\Models\Role::class)) {
+            $user->assignRole('user');
+        }
+
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect(route('home', absolute: false));
     }
 }
